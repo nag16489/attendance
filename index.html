@@ -7,16 +7,20 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #f0f2f5; padding-bottom: 340px; font-family: 'Segoe UI', sans-serif; }
-        .header { background: #1a237e; color: white; padding: 15px; position: sticky; top: 0; z-index: 1000; border-bottom: 4px solid #ffd600; }
+        .header { background: #1a237e; color: white; padding: 15px; position: relative; z-index: 100; border-bottom: 4px solid #ffd600; }
         .student-item { background: white; margin: 8px; padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border-left: 8px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .is-a { border-left-color: #d32f2f; background: #fff5f5; }
         .is-p { border-left-color: #2e7d32; background: #f1f8f1; }
-        .footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #ddd; z-index: 1001; border-radius: 20px 20px 0 0; }
+        .footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #ddd; z-index: 101; border-radius: 20px 20px 0 0; }
         .action-btns { display: flex; gap: 8px; }
         .btn-round { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 16px; color: white; font-weight: bold; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .bg-wa { background: #25d366; }
         .bg-call { background: #0d6efd; }
-        #history-view, #image-modal { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; padding:20px; }
+        
+        /* Modal Overlays (Hidden by default to prevent blocking clicks) */
+        #history-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; padding: 20px; }
+        #image-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; padding: 20px; align-items: center; justify-content: center; }
+        
         .history-card { background: white; height: 85%; border-radius: 15px; padding: 20px; overflow-y: auto; }
         pre { background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; white-space: pre-wrap; color: #333; border: 1px solid #ddd; }
         .topic-attach-area { background: #e8eaf6; padding: 8px 12px; border-radius: 30px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -58,8 +62,8 @@
     </div>
 </div>
 
-<!-- Full Image View Modal (Tap anywhere on overlay to close) -->
-<div id="image-modal" class="d-flex justify-content-center align-items-center" onclick="closeImageModal()">
+<!-- Full Image View Modal -->
+<div id="image-modal" onclick="closeImageModal()">
     <img id="modal-img" src="" style="max-width: 95%; max-height: 85vh; border-radius: 10px; box-shadow: 0 0 15px rgba(255,255,255,0.3);">
 </div>
 
@@ -108,17 +112,17 @@
         </div>
     </div>
 
-    <!-- Topic + Blackboard Enhancement & Material Generation -->
+    <!-- Topic Input & Material Generation Controls -->
     <div class="mt-2 topic-attach-area justify-content-center">
         <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Enter topic for material">
         <button class="btn btn-sm btn-warning" onclick="generateAIMaterial()" style="font-weight:600;">✨ Generate Material</button>
-        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15);">📷 Photo Board</label>
+        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15); cursor:pointer;">📷 Photo Board</label>
         <input type="file" id="file-upload" accept="image/*" style="display:none;" onchange="handleBlackboardUpload(event)">
         <span id="file-badge" class="file-badge" style="display:none;">🖼️ image</span>
         <button class="btn btn-sm btn-outline-light" onclick="clearAttachment()" style="padding:0 8px;">✕</button>
     </div>
     
-    <!-- Single Clean Clickable Material Image Preview -->
+    <!-- Material Preview -->
     <div id="material-preview-card" class="material-card" style="display:none;">
         <img id="material-img-element" class="material-thumb" onclick="openImageModal()" alt="Material Image">
         <div class="click-hint">🔍 Tap Image to View Full Screen</div>
@@ -176,7 +180,7 @@ Please Call me to know study details of your ward:</textarea>
             div.className = 'student-item is-p';
             div.id = `card-${s.r}`;
             div.innerHTML = `
-                <div onclick="toggleAtt('${s.r}')" style="flex-grow:1;">
+                <div onclick="toggleAtt('${s.r}')" style="flex-grow:1; cursor:pointer;">
                     <strong class="d-block">${s.r}</strong>
                     <small class="text-muted fw-bold">${s.n.toUpperCase()}</small>
                 </div>
