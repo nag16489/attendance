@@ -19,6 +19,10 @@
         #history-view { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; padding:20px; }
         .history-card { background: white; height: 85%; border-radius: 15px; padding: 20px; overflow-y: auto; }
         pre { background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; white-space: pre-wrap; color: #333; border: 1px solid #ddd; }
+        .topic-attach-area { background: #e8eaf6; padding: 8px 12px; border-radius: 30px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .topic-attach-area input, .topic-attach-area label { font-size: 0.8rem; }
+        .file-badge { background: #0d6efd; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; white-space: nowrap; }
+        .file-badge i { margin-right: 4px; }
     </style>
 </head>
 <body>
@@ -78,6 +82,15 @@
             </div>
         </div>
     </div>
+
+    <!-- Topic + Attachment Row (faculty upload) -->
+    <div class="mt-2 topic-attach-area justify-content-center">
+        <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Topic name">
+        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15);">📎 Upload</label>
+        <input type="file" id="file-upload" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png" style="display:none;" onchange="handleFileUpload(event)">
+        <span id="file-badge" class="file-badge" style="display:none;">📄 file.pdf</span>
+        <button class="btn btn-sm btn-outline-light" onclick="clearAttachment()" style="padding:0 8px;">✕</button>
+    </div>
 </div>
 
 <div class="container mt-2" id="list"></div>
@@ -114,6 +127,7 @@ Please Call to me to know study details of your ward:</textarea>
         'C': [{"r":"24E11A04B1","n":"ADUPA HARINI","p":"9949114225"}, {"r":"24E11A04B2","n":"ANANTHULA  VAISHNAVI","p":"9959042187"}, {"r":"24E11A04B3","n":"ANDANKEE JAGADEESH","p":"9502906526"}, {"r":"24E11A04B4","n":"Andekar Shiva Kumar","p":"9182597877"}, {"r":"24E11A04B5","n":"ANNAM TEJASWINI","p":"9908932378"}, {"r":"24E11A04B6","n":"BALAM MANISAI","p":"6301895500"}, {"r":"24E11A04B8","n":"BHUKYAADITYA","p":"7981954405"}, {"r":"24E11A04B9","n":"B MAHENDAR REDDY","p":"7601007981"}, {"r":"24E11A04C0","n":"BURRA RAMU","p":"9989915648"}, {"r":"24E11A04C1","n":"CHINTAKUNTA SAI DEEPAK","p":"9989813113"}, {"r":"24E11A04C2","n":"SHAIK SAMEER","p":"9866497516"}, {"r":"24E11A04C3","n":"MEKA SONI","p":"7675914546"}, {"r":"24E11A04C4","n":"DONTHAM SNEHITHA","p":"9515413238"}, {"r":"24E11A04C5","n":"KOTARI ARYA NAVISH","p":"8341053910"}, {"r":"24E11A04C6","n":"GADDAMEEDI AMULYA","p":"9949179912"}, {"r":"24E11A04C7","n":"GATLA TRIVENI","p":"9618169796"}, {"r":"24E11A04C8","n":"GODASU PREETHAM KUMAR","p":"7382805152"}, {"r":"24E11A04C9","n":"THADASINA CHARAN REDDY","p":"7801004779"}, {"r":"24E11A04D0","n":"GUNTOJU SAI CHANDU","p":"8897173147"}, {"r":"24E11A04D1","n":"JAIDUPALLY SRIHITHA REDDY","p":"9392274743"}, {"r":"24E11A04D2","n":"KADUSU NAGARAJU","p":"8106516682"}, {"r":"24E11A04D3","n":"K AKSHAYA","p":"9885468366"}, {"r":"24E11A04D4","n":"THOGARI SRAVANI","p":"7730841521"}, {"r":"24E11A04D5","n":"KARNATI PRAVALIKA","p":"9014251719"}, {"r":"24E11A04D6","n":"KONDAGORLAMADHAVI","p":"7799667565"}, {"r":"24E11A04D7","n":"KONDAPALLI HARSHA VARDHAN DATTA","p":"9676546789"}, {"r":"24E11A04D8","n":"U HARSHITHA","p":"9505306676"}, {"r":"24E11A04D9","n":"KUNSOTH BHARATH","p":"9618594001"}, {"r":"24E11A04E0","n":"KURUVA MAHESH","p":"9014476659"}, {"r":"24E11A04E1","n":"LODDA SAI CHARAN","p":"798998859"}, {"r":"24E11A04E2","n":"Likki vivek vardhan","p":"7075146622"},{"r":"24E11A04E4","n":"N.ABHISHEK","p":"8309704586"},{"r":"24E11A04E5","n":"VANKADOTHU KAVILASH","p":"9032449011"},{"r":"24E11A04E6","n":"YAJJALA DHANANJAY","p":"6302022403"},{"r":"24E11A04E7","n":"TEJAVATH NIKHIL","p":"9849051416"},{"r":"24E11A04E8","n":"PURUGULA VAISHNAVI"},{"r":"24E11A04E9","n":"RADARAPU AJITHKUMARq"},{"r":"24E11A04F0","n":"BAMAN NANDULAL"},{"r":"24E11A04F1","n":"RAVULA PAVAN"},{"r":"25E15A0429","n":"SURUBULA SANJAY"},{"r":"25E15A0430","n":"GANJI PRAGATHI"},{"r":"25E15A0431","n":"YAMJALA BHUVANA CHANDRA"},{"r":"25E15A0432","n":"GADIGE SHAILAJA"},{"r":"25E15A0433","n":"AKKAVATHRI NAVEENA"},{"r":"25E15A0434","n":"CHINTAKUNTA LAHARIKA"},{"r":"25E15A0435","n":"MOHAMMED SAMEERUDDIN"},{"r":"25E15A0436","n":"MEGAVATH PAVAN"},{"r":"25E15A0437","n":"JATOTH DONA"},{"r":"25E15A0438","n":"DHARAVATH SAINAYAK"},{"r":"25E15A0439","n":"SAKA HARINI"},{"r":"25E15A0440","n":"PASUPULA DEEPIKA"},{"r":"25E15A0441","n":"KILARI THARUN"},{"r":"25E15A0442","n":"NANDALA VASAVI"},{"r":"25E15A0443","n":"PANDALA AKSHITHA"},{"r":"25E15A0444","n":"KANAKATI SPANDANA"},{"r":"25E15A0445","n":"GOWLIKAR HARSHITA"},{"r":"25E15A0446","n":"MANTRI AMULYA"},{"r":"25E15A0447","n":"OLLALA SOUJANYA"},{"r":"25E15A0448","n":"GADASANDHU AKSHITHA"},{"r":"25E15A0449","n":"VANGA AKASH"},{"r":"25E15A0450","n":"PALLE MOUNIHARIKA"},{"r":"25E15A0451","n":"VANGA ASHWINI"},{"r":"25E15A0452","n":"B RAVI TEJA"},{"r":"25E15A0453","n":"S ABHILASH"},{"r":"25E15A0454","n":"B MADHUKAR"},{"r":"25E15A0455","n":"I VAISHNAVI"},{"r":"25E15A0456","n":"SURVI PRANEETH"}]
     };
     let att = {};
+    let uploadedFileData = null; // store file info
 
     function loadList() {
         const sec = document.getElementById('sec-sel').value;
@@ -134,8 +148,8 @@ Please Call to me to know study details of your ward:</textarea>
                     <small class="text-muted fw-bold">${s.n.toUpperCase()}</small>
                 </div>
                 <div class="action-btns">
-                    <button onclick="sendWA('${s.p}', '${s.n}')" class="btn-round bg-wa">WA</button>
-                    <a href="tel:${s.p}" class="btn-round bg-call">📞</a>
+                    <button onclick="sendWA('${s.p || ''}', '${s.n}')" class="btn-round bg-wa">WA</button>
+                    <a href="tel:${s.p || ''}" class="btn-round bg-call">📞</a>
                 </div>
             `;
             container.appendChild(div);
@@ -188,8 +202,14 @@ Please Call to me to know study details of your ward:</textarea>
         const sec = document.getElementById('sec-sel').value;
         const subject = document.getElementById('subject-sel').value;
         const period = document.getElementById('period-sel').value;
+        const topic = document.getElementById('topic-name').value.trim() || 'Not specified';
         const abs = students[sec].filter(s => att[s.r] === 'A');
-        return `📊 *ATTENDANCE REPORT*\n📝 *Subject:* ${subject}\n👨‍🏫 *Faculty:* G.Nagarjuna\n📌 *Sec:* ${sec} (${period})\n📅 *Date:* ${new Date().toLocaleDateString()}\n📈 *Att:* ${document.getElementById('perc-ui').innerText}\n\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
+        // attachment info
+        let attachStr = 'No attachment';
+        if (uploadedFileData) {
+            attachStr = `📎 ${uploadedFileData.name} (${(uploadedFileData.size/1024).toFixed(1)} KB)`;
+        }
+        return `📊 *ATTENDANCE REPORT*\n📝 *Subject:* ${subject}\n👨‍🏫 *Faculty:* G.Nagarjuna\n📌 *Sec:* ${sec} (${period})\n📅 *Date:* ${new Date().toLocaleDateString()}\n📈 *Att:* ${document.getElementById('perc-ui').innerText}\n📖 *Topic:* ${topic}\n📎 *Material:* ${attachStr}\n\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
     }
 
     function saveRecord() {
@@ -224,6 +244,21 @@ Please Call to me to know study details of your ward:</textarea>
         if(!abs.length) return alert("No absentees with phone numbers!");
         const nums = abs.map(s => s.p).join(/iPad|iPhone|iPod/.test(navigator.userAgent) ? ',' : ';');
         window.location.href = `sms:${nums}?body=${encodeURIComponent(document.getElementById('custom-msg').value)}`;
+    }
+
+    // --- Attachment handlers ---
+    function handleFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        uploadedFileData = { name: file.name, size: file.size, type: file.type };
+        document.getElementById('file-badge').style.display = 'inline-block';
+        document.getElementById('file-badge').innerHTML = `📄 ${file.name}`;
+    }
+
+    function clearAttachment() {
+        uploadedFileData = null;
+        document.getElementById('file-upload').value = '';
+        document.getElementById('file-badge').style.display = 'none';
     }
 
     document.getElementById('current-date').innerText = new Date().toDateString();
