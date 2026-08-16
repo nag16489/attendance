@@ -124,7 +124,7 @@
     <!-- Material Preview -->
     <div id="material-preview-card" class="material-card" style="display:none;">
         <img id="material-img-element" class="material-thumb" onclick="openImageModal()" alt="Material Image">
-        <div class="click-hint">🔍 Tap Image to Preview | Uploading to cloud link...</div>
+        <div class="click-hint">🔍 Tap Image to Preview Material</div>
     </div>
 </div>
 
@@ -164,7 +164,6 @@ Please Call me to know study details of your ward:</textarea>
     
     let att = {};
     let currentMaterialDataUrl = ""; 
-    let currentUploadedImageUrl = ""; // Holds actual web link for WhatsApp
 
     function loadList() {
         const sec = document.getElementById('sec-sel').value;
@@ -235,35 +234,13 @@ Please Call me to know study details of your ward:</textarea>
         return reportStr;
     }
 
-    // Function to host generated canvas image online to get a clickable URL
-    function uploadImageToCloud(dataUrl, callback) {
-        const formData = new FormData();
-        formData.append("image", dataUrl.split(',')[1]);
-        
-        // ImgBB API key for uploading image online dynamically
-        fetch("https://api.imgbb.com/1/upload?key=6d70073203063db8412867e8053a487a", {
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.json())
-        .then(res => {
-            if (res.data && res.data.url) {
-                currentUploadedImageUrl = res.data.url;
-                if(callback) callback(res.data.url);
-            }
-        })
-        .catch(err => {
-            console.error("Cloud upload failed:", err);
-        });
-    }
-
     function generateAIMaterial() {
         const topic = document.getElementById('topic-name').value.trim();
         if (!topic) return alert('Please enter a topic name!');
 
         const canvas = document.createElement('canvas');
         canvas.width = 650;
-        canvas.height = 800;
+        canvas.height = 780;
         const ctx = canvas.getContext('2d');
 
         // Background
@@ -282,7 +259,7 @@ Please Call me to know study details of your ward:</textarea>
         ctx.lineTo(620, 65);
         ctx.stroke();
 
-        // Clear Step-Wise Detailed Content
+        // Detailed Content Steps
         const steps = [
             `1. DEFINITION & BASIC CONCEPT:`,
             `   - ${topic} forms core system responses in Control / ECE systems.`,
@@ -304,7 +281,6 @@ Please Call me to know study details of your ward:</textarea>
         ];
 
         ctx.fillStyle = "#2c3e50";
-        ctx.font = "14px 'Segoe UI', sans-serif";
         let y = 100;
         steps.forEach(line => {
             if (line.startsWith("1.") || line.startsWith("2.") || line.startsWith("3.") || line.startsWith("4.") || line.startsWith("5.") || line.startsWith("6.")) {
@@ -321,13 +297,10 @@ Please Call me to know study details of your ward:</textarea>
         // Faculty Signature Footer
         ctx.fillStyle = "#1a237e";
         ctx.font = "italic bold 14px sans-serif";
-        ctx.fillText("✍️ Prepared by: Faculty G. Nagarjuna (Dept. of ECE)", 35, 760);
+        ctx.fillText("✍️ Prepared by: Faculty G. Nagarjuna (Dept. of ECE)", 35, 740);
 
         currentMaterialDataUrl = canvas.toDataURL("image/png");
         displayMaterialCard(currentMaterialDataUrl, `✨ AI: ${topic}`);
-        
-        // Upload image to web so students get a clickable web link
-        uploadImageToCloud(currentMaterialDataUrl);
     }
 
     function handleBlackboardUpload(e) {
@@ -347,9 +320,9 @@ Please Call me to know study details of your ward:</textarea>
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imgData.data;
 
+                // Simple high-contrast cleaning for blackboard text
                 for (let i = 0; i < data.length; i += 4) {
                     let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    
                     if (avg > 110) {
                         data[i] = 20;
                         data[i + 1] = 30;
@@ -364,9 +337,6 @@ Please Call me to know study details of your ward:</textarea>
                 ctx.putImageData(imgData, 0, 0);
                 currentMaterialDataUrl = canvas.toDataURL("image/png");
                 displayMaterialCard(currentMaterialDataUrl, `📷 Cleaned Board Photo`);
-                
-                // Upload image to web so students get a clickable web link
-                uploadImageToCloud(currentMaterialDataUrl);
             };
             img.src = event.target.result;
         };
@@ -382,7 +352,6 @@ Please Call me to know study details of your ward:</textarea>
 
     function clearAttachment() {
         currentMaterialDataUrl = "";
-        currentUploadedImageUrl = "";
         document.getElementById('file-upload').value = '';
         document.getElementById('file-badge').style.display = 'none';
         document.getElementById('material-preview-card').style.display = 'none';
@@ -402,7 +371,7 @@ Please Call me to know study details of your ward:</textarea>
         const sec = document.getElementById('sec-sel').value;
         const subject = document.getElementById('subject-sel').value;
         const period = document.getElementById('period-sel').value;
-        const topic = document.getElementById('topic-name').value.trim() || 'General';
+        const topic = document.getElementById('topic-name').value.trim() || 'General Topic';
         const abs = students[sec].filter(s => att[s.r] === 'A');
         
         let report = `📊 *ECE ATTENDANCE REPORT*\n` +
@@ -412,10 +381,8 @@ Please Call me to know study details of your ward:</textarea>
                      `📈 *Attendance:* ${document.getElementById('perc-ui').innerText}\n` +
                      `📖 *Topic:* ${topic}\n`;
 
-        if (currentUploadedImageUrl) {
-            report += `🖼️ *Material Link (Tap to view notes/diagram):*\n🔗 ${currentUploadedImageUrl}\n`;
-        } else if (currentMaterialDataUrl) {
-            report += `🖼️ *Material Attached:* [Processing link, tap WhatsApp send to include link]\n`;
+        if (currentMaterialDataUrl) {
+            report += `🖼️ *Material Attached:* [1 Topic Material Image Attached]\n`;
         }
 
         report += `\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
@@ -425,7 +392,11 @@ Please Call me to know study details of your ward:</textarea>
     function saveRecord() {
         const report = generateReport();
         const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
-        records.unshift({ time: new Date().toLocaleString(), data: report });
+        records.unshift({ 
+            time: new Date().toLocaleString(), 
+            data: report,
+            img: currentMaterialDataUrl 
+        });
         localStorage.setItem('ece_v5_hist', JSON.stringify(records.slice(0, 50)));
         alert("✅ Report Saved Successfully!");
     }
@@ -434,13 +405,22 @@ Please Call me to know study details of your ward:</textarea>
         const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
         const list = document.getElementById('history-list');
         list.innerHTML = records.length ? '' : '<p class="text-center">No records.</p>';
-        records.forEach(rec => {
+        records.forEach((rec, idx) => {
             const div = document.createElement('div');
             div.className = 'mb-3 border-bottom pb-2';
-            div.innerHTML = `<small class="fw-bold text-primary">${rec.time}</small><pre>${rec.data}</pre>`;
+            let imgHTML = rec.img ? `<div class="mt-1"><img src="${rec.img}" style="max-height:100px; border-radius:6px; cursor:pointer;" onclick="openHistoryImg('${idx}')"><br><small class="text-primary fw-bold">🔍 Tap image to expand</small></div>` : '';
+            div.innerHTML = `<small class="fw-bold text-primary">${rec.time}</small><pre>${rec.data}</pre>${imgHTML}`;
             list.appendChild(div);
         });
         document.getElementById('history-view').style.display = 'block';
+    }
+
+    function openHistoryImg(index) {
+        const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
+        if(records[index] && records[index].img) {
+            document.getElementById('modal-img').src = records[index].img;
+            document.getElementById('image-modal').style.display = 'flex';
+        }
     }
 
     function closeHistory() { document.getElementById('history-view').style.display = 'none'; }
