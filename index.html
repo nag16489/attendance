@@ -16,70 +16,37 @@
         .btn-round { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 16px; color: white; font-weight: bold; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .bg-wa { background: #25d366; }
         .bg-call { background: #0d6efd; }
-        #history-view { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; padding:20px; }
+        #history-view, #image-modal { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2000; padding:20px; }
         .history-card { background: white; height: 85%; border-radius: 15px; padding: 20px; overflow-y: auto; }
         pre { background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; white-space: pre-wrap; color: #333; border: 1px solid #ddd; }
         .topic-attach-area { background: #e8eaf6; padding: 8px 12px; border-radius: 30px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .topic-attach-area input, .topic-attach-area label { font-size: 0.8rem; }
         .file-badge { background: #0d6efd; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; white-space: nowrap; }
-        .material-preview { 
-            background: #fff8e1; 
-            border-radius: 16px; 
-            padding: 15px; 
-            margin-top: 8px; 
-            border: 2px dashed #ffb300;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
-            max-height: 300px;
-            overflow-y: auto;
-            position: relative;
-        }
-        .material-preview::before {
-            content: "📄 MATERIAL PREVIEW";
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: #ffb300;
-            color: #1a237e;
-            padding: 0 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-        .material-image-card {
-            background: white;
+        
+        .material-card {
+            background: #ffffff;
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border: 1px solid #e0e0e0;
-            margin: 10px 0;
-            font-family: 'Segoe UI', sans-serif;
+            padding: 12px;
+            margin-top: 10px;
+            border: 2px solid #ffd600;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            text-align: center;
         }
-        .material-image-card .step {
-            background: #f5f5f5;
-            padding: 8px 15px;
+        .material-thumb {
+            max-width: 100%;
+            max-height: 220px;
             border-radius: 8px;
-            margin: 6px 0;
-            border-left: 4px solid #1a237e;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            transition: transform 0.2s ease;
         }
-        .material-image-card .step-number {
-            color: #1a237e;
-            font-weight: bold;
-            margin-right: 8px;
-        }
-        .material-image-card .title {
-            color: #1a237e;
-            font-weight: bold;
-            font-size: 1.1rem;
-            border-bottom: 2px solid #ffd600;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-        }
+        .material-thumb:hover { transform: scale(1.02); }
+        .click-hint { font-size: 0.75rem; color: #1a237e; font-weight: bold; margin-top: 5px; }
     </style>
 </head>
 <body>
 
+<!-- History Modal -->
 <div id="history-view">
     <div class="history-card shadow">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -89,6 +56,12 @@
         <div id="history-list"></div>
         <button class="btn btn-outline-danger btn-sm w-100 mt-3" onclick="clearHistory()">DELETE ALL</button>
     </div>
+</div>
+
+<!-- Full Image View Modal -->
+<div id="image-modal" class="d-flex justify-content-center align-items-center flex-column">
+    <button class="btn btn-light btn-sm mb-2 fw-bold" onclick="closeImageModal()">✕ Close Material</button>
+    <img id="modal-img" src="" style="max-width: 95%; max-height: 80vh; border-radius: 10px; box-shadow: 0 0 15px rgba(255,255,255,0.3);">
 </div>
 
 <div class="header text-center">
@@ -136,17 +109,21 @@
         </div>
     </div>
 
-    <!-- Topic + Attachment + AI material generation -->
+    <!-- Topic + Blackboard Enhancement & Material Generation -->
     <div class="mt-2 topic-attach-area justify-content-center">
         <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Enter topic for material">
         <button class="btn btn-sm btn-warning" onclick="generateAIMaterial()" style="font-weight:600;">✨ Generate Material</button>
-        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15);">📎 Upload Image</label>
-        <input type="file" id="file-upload" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.txt" style="display:none;" onchange="handleFileUpload(event)">
-        <span id="file-badge" class="file-badge" style="display:none;">📄 file</span>
+        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15);">📷 Photo Board</label>
+        <input type="file" id="file-upload" accept="image/*" style="display:none;" onchange="handleBlackboardUpload(event)">
+        <span id="file-badge" class="file-badge" style="display:none;">🖼️ image</span>
         <button class="btn btn-sm btn-outline-light" onclick="clearAttachment()" style="padding:0 8px;">✕</button>
     </div>
-    <!-- Material preview as image-style card -->
-    <div id="material-preview" class="material-preview" style="display:none;"></div>
+    
+    <!-- Single Clean Clickable Material Image Preview -->
+    <div id="material-preview-card" class="material-card" style="display:none;">
+        <img id="material-img-element" class="material-thumb" onclick="openImageModal()" alt="Material Image">
+        <div class="click-hint">🔍 Tap Image to View Full Screen</div>
+    </div>
 </div>
 
 <div class="container mt-2" id="list"></div>
@@ -163,10 +140,10 @@ COLLEGE Attendance ALERT: Department of Electronics and Communication Engineerin
 Subject: Urgent Notice: Attendance Warning 
 
 Dear Parent/Guardian,
-This is to inform you that your ward, was absent from college today. Please ensure they report to college tomorrow morning without fail. Consistent attendance is mandatory.
+This is to inform you that your ward was absent from college today. Please ensure they report to college tomorrow morning without fail.
 
 Regards,
-Please Call to me to know study details of your ward:</textarea>
+Please Call me to know study details of your ward:</textarea>
     </div>
 
     <div class="row g-1">
@@ -182,10 +159,9 @@ Please Call to me to know study details of your ward:</textarea>
         'B': [{"r":"24E11A0456","n":"AMBATI VARUN KUMAR"},{"r":"24E11A0457","n":"ATHI SWATHI"},{"r":"24E11A0458","n":"BADIGAR SAI DHANUSH"},{"r":"24E11A0459","n":"BANDARU THIRUPATHI SWAMY"},{"r":"24E11A0460","n":"BANOTHU NARASIMHA NAIK"},{"r":"24E11A0461","n":"BOLLEDULLA RUDRANSH NATH"},{"r":"24E11A0462","n":"BURA AKHIL"},{"r":"24E11A0463","n":"CHATAMONI AKHILA"},{"r":"24E11A0464","n":"CHEGURI SHIVA KUMAR"},{"r":"24E11A0465","n":"DHAMASTHAPURAM AKSHAYA"},{"r":"24E11A0466","n":"DHARAVATH NATHEEP NAIK"},{"r":"24E11A0467","n":"DHARAVATH THANUSREE"},{"r":"24E11A0468","n":"GADDALA MADHAVA SAIRAM"},{"r":"24E11A0469","n":"GADDAM DEEPAK"},{"r":"24E11A0470","n":"GOLLA ADITYA"},{"r":"24E11A0471","n":"GOLLENA KRISHNA"},{"r":"24E11A0472","n":"JANI THOTAPALLY"},{"r":"24E11A0473","n":"G SUNIL"},{"r":"24E11A0474","n":"SINGARAM SUNNY ABISHEK"},{"r":"24E11A0475","n":"KOMATI ARUN KUMAR"},{"r":"24E11A0476","n":"GURAJALA SHRUTHIKA"},{"r":"24E11A0477","n":"THAMMALI SAI BHAVANA"},{"r":"24E11A0478","n":"Merugu shiva"},{"r":"24E11A0479","n":"JOGU NISHANTH"},{"r":"24E11A0480","n":"Kadari Udaykiran Reddy"},{"r":"24E11A0481","n":"KALAKUNTLA SAI GANESH"},{"r":"24E11A0482","n":"KALAPPAGARI ABHINAV"},{"r":"24E11A0483","n":"KANKALA NAGARANI"},{"r":"24E11A0484","n":"KATHI ANITHA"},{"r":"24E11A0485","n":"KODELA THARUN"},{"r":"24E11A0486","n":"KOLAN CHARAN REDDY"},{"r":"24E11A0487","n":"KOTAGIRI JASHWANTH CHARY"},{"r":"24E11A0488","n":"PEDDAPURAM AKHIL"},{"r":"24E11A0489","n":"Kurakula Bharath Kumar"},{"r":"24E11A0490","n":"LENKALAPALLY PRANAY TEJA"},{"r":"24E11A0491","n":"L PRUDHVIRAJU"},{"r":"24E11A0492","n":"MAIDAM AKSHAYA"},{"r":"24E11A0493","n":"NADIKUDA DEVI SRI PRASAD"},{"r":"24E11A0494","n":"NAKIREKANTI BHANU CHANDRA PRASAD"},{"r":"24E11A0495","n":"NAKKA DHANRAJ"},{"r":"24E11A0496","n":"NENAVATH GUNDA"},{"r":"24E11A0497","n":"PUTTA RAVICHANDRIKA"},{"r":"24E11A0498","n":"PALLE MIKSHITHA"},{"r":"24E11A0499","n":"PANNALA NIMITHA"},{"r":"24E11A04A0","n":"PENUGONDA HARSHITH"},{"r":"24E11A04A1","n":"SILIVERU SIDDHARTH"},{"r":"24E11A04A2","n":"SHAIK FAISAL AIYAN"},{"r":"24E11A04A3","n":"SHIVANI SANTHOSHI KUMARI"},{"r":"24E11A04A4","n":"THIRTHIYAL VARSHITH SAI"},{"r":"24E11A04A5","n":"THORNE ASHMITHA"},{"r":"24E11A04A6","n":"U.AKHILA"},{"r":"24E11A04A7","n":"Goura pooja"},{"r":"24E11A04A8","n":"PASNURI VENKATA RAMANA"},{"r":"24E11A04A9","n":"VUSHAKOLA RAHUL"},{"r":"24E11A04B0","n":"YESHALA DEEPAK"},{"r":"25E15A0416","n":"KOYALKAR SHRUTHIKA"},{"r":"25E15A0417","n":"MANDLA LOHITHA"},{"r":"25E15A0418","n":"RAVULA VAISHNAVI"},{"r":"25E15A0419","n":"V KALYAN"},{"r":"25E15A0420","n":"PATHURI VAISHNAVI"},{"r":"25E15A0421","n":"BADIKELA HARI PRAKASH"},{"r":"25E15A0422","n":"RAGULA MYKRANTH"},{"r":"25E15A0423","n":"SILLA BHANU PRAKASH"},{"r":"25E15A0424","n":"M SANJAY"},{"r":"25E15A0425","n":"BEJJENKI LAHARI"},{"r":"25E15A0426","n":"D JAI SUBHASH"},{"r":"25E15A0427","n":"M RAMCHARAN"},{"r":"25E15A0428","n":"REPALLE VAGDEVI"}],
         'C': [{"r":"24E11A04B1","n":"ADUPA HARINI","p":"9949114225"}, {"r":"24E11A04B2","n":"ANANTHULA  VAISHNAVI","p":"9959042187"}, {"r":"24E11A04B3","n":"ANDANKEE JAGADEESH","p":"9502906526"}, {"r":"24E11A04B4","n":"Andekar Shiva Kumar","p":"9182597877"}, {"r":"24E11A04B5","n":"ANNAM TEJASWINI","p":"9908932378"}, {"r":"24E11A04B6","n":"BALAM MANISAI","p":"6301895500"}, {"r":"24E11A04B8","n":"BHUKYAADITYA","p":"7981954405"}, {"r":"24E11A04B9","n":"B MAHENDAR REDDY","p":"7601007981"}, {"r":"24E11A04C0","n":"BURRA RAMU","p":"9989915648"}, {"r":"24E11A04C1","n":"CHINTAKUNTA SAI DEEPAK","p":"9989813113"}, {"r":"24E11A04C2","n":"SHAIK SAMEER","p":"9866497516"}, {"r":"24E11A04C3","n":"MEKA SONI","p":"7675914546"}, {"r":"24E11A04C4","n":"DONTHAM SNEHITHA","p":"9515413238"}, {"r":"24E11A04C5","n":"KOTARI ARYA NAVISH","p":"8341053910"}, {"r":"24E11A04C6","n":"GADDAMEEDI AMULYA","p":"9949179912"}, {"r":"24E11A04C7","n":"GATLA TRIVENI","p":"9618169796"}, {"r":"24E11A04C8","n":"GODASU PREETHAM KUMAR","p":"7382805152"}, {"r":"24E11A04C9","n":"THADASINA CHARAN REDDY","p":"7801004779"}, {"r":"24E11A04D0","n":"GUNTOJU SAI CHANDU","p":"8897173147"}, {"r":"24E11A04D1","n":"JAIDUPALLY SRIHITHA REDDY","p":"9392274743"}, {"r":"24E11A04D2","n":"KADUSU NAGARAJU","p":"8106516682"}, {"r":"24E11A04D3","n":"K AKSHAYA","p":"9885468366"}, {"r":"24E11A04D4","n":"THOGARI SRAVANI","p":"7730841521"}, {"r":"24E11A04D5","n":"KARNATI PRAVALIKA","p":"9014251719"}, {"r":"24E11A04D6","n":"KONDAGORLAMADHAVI","p":"7799667565"}, {"r":"24E11A04D7","n":"KONDAPALLI HARSHA VARDHAN DATTA","p":"9676546789"}, {"r":"24E11A04D8","n":"U HARSHITHA","p":"9505306676"}, {"r":"24E11A04D9","n":"KUNSOTH BHARATH","p":"9618594001"}, {"r":"24E11A04E0","n":"KURUVA MAHESH","p":"9014476659"}, {"r":"24E11A04E1","n":"LODDA SAI CHARAN","p":"798998859"}, {"r":"24E11A04E2","n":"Likki vivek vardhan","p":"7075146622"},{"r":"24E11A04E4","n":"N.ABHISHEK","p":"8309704586"},{"r":"24E11A04E5","n":"VANKADOTHU KAVILASH","p":"9032449011"},{"r":"24E11A04E6","n":"YAJJALA DHANANJAY","p":"6302022403"},{"r":"24E11A04E7","n":"TEJAVATH NIKHIL","p":"9849051416"},{"r":"24E11A04E8","n":"PURUGULA VAISHNAVI"},{"r":"24E11A04E9","n":"RADARAPU AJITHKUMARq"},{"r":"24E11A04F0","n":"BAMAN NANDULAL"},{"r":"24E11A04F1","n":"RAVULA PAVAN"},{"r":"25E15A0429","n":"SURUBULA SANJAY"},{"r":"25E15A0430","n":"GANJI PRAGATHI"},{"r":"25E15A0431","n":"YAMJALA BHUVANA CHANDRA"},{"r":"25E15A0432","n":"GADIGE SHAILAJA"},{"r":"25E15A0433","n":"AKKAVATHRI NAVEENA"},{"r":"25E15A0434","n":"CHINTAKUNTA LAHARIKA"},{"r":"25E15A0435","n":"MOHAMMED SAMEERUDDIN"},{"r":"25E15A0436","n":"MEGAVATH PAVAN"},{"r":"25E15A0437","n":"JATOTH DONA"},{"r":"25E15A0438","n":"DHARAVATH SAINAYAK"},{"r":"25E15A0439","n":"SAKA HARINI"},{"r":"25E15A0440","n":"PASUPULA DEEPIKA"},{"r":"25E15A0441","n":"KILARI THARUN"},{"r":"25E15A0442","n":"NANDALA VASAVI"},{"r":"25E15A0443","n":"PANDALA AKSHITHA"},{"r":"25E15A0444","n":"KANAKATI SPANDANA"},{"r":"25E15A0445","n":"GOWLIKAR HARSHITA"},{"r":"25E15A0446","n":"MANTRI AMULYA"},{"r":"25E15A0447","n":"OLLALA SOUJANYA"},{"r":"25E15A0448","n":"GADASANDHU AKSHITHA"},{"r":"25E15A0449","n":"VANGA AKASH"},{"r":"25E15A0450","n":"PALLE MOUNIHARIKA"},{"r":"25E15A0451","n":"VANGA ASHWINI"},{"r":"25E15A0452","n":"B RAVI TEJA"},{"r":"25E15A0453","n":"S ABHILASH"},{"r":"25E15A0454","n":"B MADHUKAR"},{"r":"25E15A0455","n":"I VAISHNAVI"},{"r":"25E15A0456","n":"SURVI PRANEETH"}]
     };
+    
     let att = {};
-    let uploadedFileData = null; 
-    let aiGeneratedMaterial = ''; 
-    let materialHTML = '';
+    let currentMaterialDataUrl = ""; 
 
     function loadList() {
         const sec = document.getElementById('sec-sel').value;
@@ -256,130 +232,158 @@ Please Call to me to know study details of your ward:</textarea>
         return reportStr;
     }
 
-    // ----- AI Material Generator (Image-style card) -----
+    // ----- Render Clean Handwriting Style Image Card for AI Material -----
     function generateAIMaterial() {
         const topic = document.getElementById('topic-name').value.trim();
-        if (!topic) {
-            alert('Please enter a topic first.');
-            return;
-        }
-        // Create a beautiful image-style card with step-by-step content
-        const steps = [
-            { num: '1', text: 'Introduction to ' + topic },
-            { num: '2', text: 'Key Concepts & Definitions' },
-            { num: '3', text: 'Mathematical Formulations' },
-            { num: '4', text: 'Circuit/System Design Approach' },
-            { num: '5', text: 'Step-by-Step Problem Solving' },
-            { num: '6', text: 'Common Errors & How to Avoid' },
-            { num: '7', text: 'Summary & Quick Revision Points' }
+        if (!topic) return alert('Please enter a topic first!');
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 700;
+        const ctx = canvas.getContext('2d');
+
+        // Clean white chalkboard / lined paper background
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Header Title
+        ctx.fillStyle = "#1a237e";
+        ctx.font = "bold 22px 'Courier New', monospace";
+        ctx.fillText(`📘 TOPIC: ${topic.toUpperCase()}`, 30, 50);
+
+        ctx.strokeStyle = "#ffd600";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(30, 65);
+        ctx.lineTo(570, 65);
+        ctx.stroke();
+
+        // Clean handwriting-style steps
+        const points = [
+            "1. Introduction & Overview",
+            "2. Core Concepts & Mathematical Models",
+            "3. Key Formulas & Derivations",
+            "4. Circuit / Block Diagram Analysis",
+            "5. Step-by-Step Problem Solving Method",
+            "6. Critical Practice Exercises",
+            "7. Quick Summary for Revision"
         ];
 
-        let cardHTML = `<div class="material-image-card">
-            <div class="title">📘 ${topic.toUpperCase()} - Study Material</div>`;
-        steps.forEach(step => {
-            cardHTML += `<div class="step"><span class="step-number">Step ${step.num}:</span> ${step.text}</div>`;
+        ctx.fillStyle = "#2c3e50";
+        ctx.font = "bold 16px 'Comic Sans MS', cursive, sans-serif";
+        let y = 110;
+        points.forEach(pt => {
+            ctx.fillText(pt, 40, y);
+            y += 45;
+            
+            // Subtle clean line dividers
+            ctx.strokeStyle = "#f0f0f0";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(40, y - 15);
+            ctx.lineTo(560, y - 15);
+            ctx.stroke();
         });
-        cardHTML += `<div style="margin-top:10px; font-size:0.85rem; color:#666; border-top:1px solid #eee; padding-top:8px;">
-            ✏️ Practice: Solve 3 problems based on this topic<br>
-            📚 Reference: Textbooks & Online Resources
-        </div></div>`;
 
-        materialHTML = cardHTML;
-        aiGeneratedMaterial = cardHTML;
-        uploadedFileData = { 
-            name: `AI-${topic}.png`, 
-            size: cardHTML.length, 
-            type: 'image/png',
-            content: cardHTML 
-        };
-        document.getElementById('file-badge').style.display = 'inline-block';
-        document.getElementById('file-badge').innerHTML = `🧠 AI: ${topic}`;
-        document.getElementById('material-preview').style.display = 'block';
-        document.getElementById('material-preview').innerHTML = cardHTML;
-        alert('✨ AI material generated as image-style card! Click "SAVE DATA" to include it in report.');
+        // Faculty signoff
+        ctx.fillStyle = "#1a237e";
+        ctx.font = "italic bold 14px sans-serif";
+        ctx.fillText("✍️ Prepared by: Faculty G. Nagarjuna (Dept. of ECE)", 40, 640);
+
+        currentMaterialDataUrl = canvas.toDataURL("image/png");
+        displayMaterialCard(currentMaterialDataUrl, `✨ AI: ${topic}`);
     }
 
-    // ----- File upload handler (image or text) -----
-    function handleFileUpload(e) {
+    // ----- Process & Clean Uploaded Blackboard Photo (Noise Removal + High Contrast) -----
+    function handleBlackboardUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                const imgHTML = `<div class="material-image-card" style="text-align:center;">
-                    <div class="title">📸 Uploaded Material</div>
-                    <img src="${ev.target.result}" style="max-width:100%; max-height:300px; border-radius:8px; border:1px solid #ddd;" alt="Uploaded material">
-                    <div style="margin-top:8px; font-size:0.85rem; color:#666;">${file.name} (${(file.size/1024).toFixed(1)} KB)</div>
-                </div>`;
-                materialHTML = imgHTML;
-                uploadedFileData = { name: file.name, size: file.size, type: file.type, content: imgHTML };
-                document.getElementById('file-badge').style.display = 'inline-block';
-                document.getElementById('file-badge').innerHTML = `🖼️ ${file.name}`;
-                document.getElementById('material-preview').style.display = 'block';
-                document.getElementById('material-preview').innerHTML = imgHTML;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                // Image processing: Binarize & clean blackboard noise
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    // Grayscale conversion
+                    let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    
+                    // High-contrast clean handwriting filter
+                    // Chalk strokes (bright) become clear dark text, background becomes clean white
+                    if (avg > 110) {
+                        data[i] = 20;     // Dark sharp text
+                        data[i + 1] = 30;
+                        data[i + 2] = 80;
+                    } else {
+                        data[i] = 255;    // Clean background
+                        data[i + 1] = 255;
+                        data[i + 2] = 255;
+                    }
+                }
+
+                ctx.putImageData(imgData, 0, 0);
+                currentMaterialDataUrl = canvas.toDataURL("image/png");
+                displayMaterialCard(currentMaterialDataUrl, `📷 Cleaned Board Photo`);
             };
-            reader.readAsDataURL(file);
-        } else if (file.type.startsWith('text/')) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                const content = ev.target.result;
-                const cardHTML = `<div class="material-image-card">
-                    <div class="title">📄 ${file.name}</div>
-                    <pre style="white-space:pre-wrap; font-size:0.85rem; background:#f8f9fa; padding:10px; border-radius:8px;">${content.substring(0, 800)}${content.length > 800 ? '\n... (truncated)' : ''}</pre>
-                </div>`;
-                materialHTML = cardHTML;
-                uploadedFileData = { name: file.name, size: file.size, type: file.type, content: cardHTML };
-                document.getElementById('file-badge').style.display = 'inline-block';
-                document.getElementById('file-badge').innerHTML = `📄 ${file.name}`;
-                document.getElementById('material-preview').style.display = 'block';
-                document.getElementById('material-preview').innerHTML = cardHTML;
-            };
-            reader.readAsText(file);
-        } else {
-            // For other files (PDF, DOC, etc.) show placeholder
-            const cardHTML = `<div class="material-image-card">
-                <div class="title">📎 ${file.name}</div>
-                <div style="padding:20px; text-align:center; background:#f5f5f5; border-radius:8px;">
-                    <span style="font-size:2rem;">📄</span>
-                    <p style="margin-top:10px;">File uploaded: ${file.name}</p>
-                    <p style="font-size:0.8rem; color:#666;">Size: ${(file.size/1024).toFixed(1)} KB</p>
-                    <p style="font-size:0.8rem; color:#666;">Click "SAVE DATA" to include in report</p>
-                </div>
-            </div>`;
-            materialHTML = cardHTML;
-            uploadedFileData = { name: file.name, size: file.size, type: file.type, content: cardHTML };
-            document.getElementById('file-badge').style.display = 'inline-block';
-            document.getElementById('file-badge').innerHTML = `📎 ${file.name}`;
-            document.getElementById('material-preview').style.display = 'block';
-            document.getElementById('material-preview').innerHTML = cardHTML;
-        }
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function displayMaterialCard(dataUrl, badgeText) {
+        document.getElementById('material-img-element').src = dataUrl;
+        document.getElementById('material-preview-card').style.display = 'block';
+        document.getElementById('file-badge').style.display = 'inline-block';
+        document.getElementById('file-badge').innerHTML = badgeText;
     }
 
     function clearAttachment() {
-        uploadedFileData = null;
-        aiGeneratedMaterial = '';
-        materialHTML = '';
+        currentMaterialDataUrl = "";
         document.getElementById('file-upload').value = '';
         document.getElementById('file-badge').style.display = 'none';
-        document.getElementById('material-preview').style.display = 'none';
-        document.getElementById('material-preview').innerHTML = '';
+        document.getElementById('material-preview-card').style.display = 'none';
     }
 
-    // ----- Generate report with topic + material (image-style) -----
+    function openImageModal() {
+        if(!currentMaterialDataUrl) return;
+        document.getElementById('modal-img').src = currentMaterialDataUrl;
+        document.getElementById('image-modal').style.display = 'flex';
+    }
+
+    function closeImageModal() {
+        document.getElementById('image-modal').style.display = 'none';
+    }
+
+    // ----- Shortened Clean WhatsApp Attendance Report -----
     function generateReport() {
         const sec = document.getElementById('sec-sel').value;
         const subject = document.getElementById('subject-sel').value;
         const period = document.getElementById('period-sel').value;
-        const topic = document.getElementById('topic-name').value.trim() || 'Not specified';
+        const topic = document.getElementById('topic-name').value.trim() || 'General';
         const abs = students[sec].filter(s => att[s.r] === 'A');
         
-        let materialDisplay = 'No material attached';
-        if (materialHTML) {
-            materialDisplay = materialHTML;
+        let report = `📊 *ECE ATTENDANCE REPORT*\n` +
+                     `👨‍🏫 *Faculty:* G.Nagarjuna\n` +
+                     `📌 *Sec:* ${sec} (${period}) | *Subject:* ${subject}\n` +
+                     `📅 *Date:* ${new Date().toLocaleDateString()}\n` +
+                     `📈 *Attendance:* ${document.getElementById('perc-ui').innerText}\n` +
+                     `📖 *Topic:* ${topic}\n`;
+
+        if (currentMaterialDataUrl) {
+            report += `🖼️ *Material Attached:* [1 Clean Handwriting Image Included]\n`;
         }
 
-        return `📊 *ATTENDANCE REPORT*\n📝 *Subject:* ${subject}\n👨‍🏫 *Faculty:* G.Nagarjuna\n📌 *Sec:* ${sec} (${period})\n📅 *Date:* ${new Date().toLocaleDateString()}\n📈 *Att:* ${document.getElementById('perc-ui').innerText}\n📖 *Topic:* ${topic}\n\n📎 *MATERIAL (Image-style card):*\n${materialDisplay}\n\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
+        report += `\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
+        return report;
     }
 
     function saveRecord() {
@@ -387,7 +391,7 @@ Please Call to me to know study details of your ward:</textarea>
         const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
         records.unshift({ time: new Date().toLocaleString(), data: report });
         localStorage.setItem('ece_v5_hist', JSON.stringify(records.slice(0, 50)));
-        alert("✅ Report Saved with material preview!");
+        alert("✅ Report Saved Successfully!");
     }
 
     function openHistory() {
@@ -408,16 +412,13 @@ Please Call to me to know study details of your ward:</textarea>
     
     function shareGroupWA() {
         const report = generateReport();
-        // Strip HTML for WhatsApp
-        const plainReport = report.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-        window.open(`https://wa.me/?text=${encodeURIComponent(plainReport)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent(report)}`, '_blank');
     }
     
     function copyText() {
         const report = generateReport();
-        const plainReport = report.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-        navigator.clipboard.writeText(plainReport);
-        alert("📋 Report copied to clipboard!");
+        navigator.clipboard.writeText(report);
+        alert("📋 Concise WhatsApp report copied to clipboard!");
     }
     
     function sendBulkSMS() {
