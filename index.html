@@ -18,33 +18,10 @@
         .bg-call { background: #0d6efd; }
         
         #history-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; padding: 20px; }
-        #image-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; padding: 20px; align-items: center; justify-content: center; }
-        
         .history-card { background: white; height: 85%; border-radius: 15px; padding: 20px; overflow-y: auto; }
         pre { background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; white-space: pre-wrap; color: #333; border: 1px solid #ddd; }
-        .topic-attach-area { background: #e8eaf6; padding: 8px 12px; border-radius: 30px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .topic-attach-area input, .topic-attach-area label { font-size: 0.8rem; }
-        .file-badge { background: #0d6efd; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; white-space: nowrap; }
-        
-        .material-card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 12px;
-            margin-top: 10px;
-            border: 2px solid #ffd600;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            text-align: center;
-        }
-        .material-thumb {
-            max-width: 100%;
-            max-height: 220px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 1px solid #ddd;
-            transition: transform 0.2s ease;
-        }
-        .material-thumb:hover { transform: scale(1.02); }
-        .click-hint { font-size: 0.75rem; color: #1a237e; font-weight: bold; margin-top: 5px; }
+        .topic-area { background: #e8eaf6; padding: 8px 12px; border-radius: 30px; display: flex; align-items: center; gap: 8px; }
+        .topic-area input { font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -59,11 +36,6 @@
         <div id="history-list"></div>
         <button class="btn btn-outline-danger btn-sm w-100 mt-3" onclick="clearHistory()">DELETE ALL</button>
     </div>
-</div>
-
-<!-- Full Image View Modal -->
-<div id="image-modal" onclick="closeImageModal()">
-    <img id="modal-img" src="" style="max-width: 95%; max-height: 85vh; border-radius: 10px; box-shadow: 0 0 15px rgba(255,255,255,0.3);">
 </div>
 
 <div class="header text-center">
@@ -111,20 +83,9 @@
         </div>
     </div>
 
-    <!-- Topic Input & Material Generation Controls -->
-    <div class="mt-2 topic-attach-area justify-content-center">
-        <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Enter topic name">
-        <button id="gen-btn" class="btn btn-sm btn-warning" onclick="generateAIMaterial()" style="font-weight:600;">✨ Generate Material</button>
-        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15); cursor:pointer;">📷 Upload Board Photo / Notes</label>
-        <input type="file" id="file-upload" accept="image/*" style="display:none;" onchange="handleNotesUpload(event)">
-        <span id="file-badge" class="file-badge" style="display:none;">🖼️ image</span>
-        <button class="btn btn-sm btn-outline-light" onclick="clearAttachment()" style="padding:0 8px;">✕</button>
-    </div>
-    
-    <!-- Material Preview -->
-    <div id="material-preview-card" class="material-card" style="display:none;">
-        <img id="material-img-element" class="material-thumb" onclick="openImageModal()" alt="Material Image">
-        <div class="click-hint">🔍 Tap Image to Preview Attached Notes</div>
+    <!-- Topic Input Controls -->
+    <div class="mt-2 topic-area justify-content-center">
+        <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:1;" placeholder="Enter topic name">
     </div>
 </div>
 
@@ -163,7 +124,6 @@ Please Call me to know study details of your ward:</textarea>
     };
     
     let att = {};
-    let currentMaterialDataUrl = ""; 
 
     function loadList() {
         const sec = document.getElementById('sec-sel').value;
@@ -234,127 +194,6 @@ Please Call me to know study details of your ward:</textarea>
         return reportStr;
     }
 
-    function handleNotesUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const maxDim = 1200;
-                let w = img.width;
-                let h = img.height;
-                if (w > maxDim || h > maxDim) {
-                    if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-                    else { w = Math.round((w * maxDim) / h); h = maxDim; }
-                }
-
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
-
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(0, 0, w, h);
-                ctx.drawImage(img, 0, 0, w, h);
-
-                currentMaterialDataUrl = canvas.toDataURL("image/jpeg", 0.85);
-                displayMaterialCard(currentMaterialDataUrl, `📷 Faculty Uploaded Material`);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function generateAIMaterial() {
-        const topic = document.getElementById('topic-name').value.trim();
-        if (!topic) return alert('Please enter a topic name!');
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 650;
-        canvas.height = 780;
-        const ctx = canvas.getContext('2d');
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#1a237e";
-        ctx.font = "bold 22px 'Courier New', monospace";
-        ctx.fillText(`📘 TOPIC: ${topic.toUpperCase()}`, 30, 50);
-
-        ctx.strokeStyle = "#ffd600";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(30, 65);
-        ctx.lineTo(620, 65);
-        ctx.stroke();
-
-        const steps = [
-            `1. DEFINITION & BASIC CONCEPT:`,
-            `   - ${topic} forms core system responses in Control / ECE systems.`,
-            `2. STEP-BY-STEP MATHEMATICAL MODEL:`,
-            `   - Transfer Function: C(s)/R(s) = w_n^2 / (s^2 + 2*zeta*w_n*s + w_n^2)`,
-            `3. KEY PARAMETERS & TIME SPECIFICATIONS:`,
-            `   - Delay Time (td): Time needed to reach 50% of final response.`,
-            `   - Rise Time (tr): Time taken to rise from 10% to 100% of final value.`,
-            `   - Peak Time (tp): Time required to reach the very first peak of overshoot.`,
-            `   - Peak Overshoot (Mp): Normalized peak height percentage above steady state.`,
-            `4. WORKED FORMULA SUMMARY:`,
-            `   - tr = (pi - theta) / w_d | tp = pi / w_d | td = (1 + 0.7*zeta) / w_n`,
-            `5. STEP-BY-STEP SOLVING PROCEDURE:`,
-            `   - Step A: Find w_n (Natural Freq) & zeta (Damping Ratio) from characteristic equation.`,
-            `   - Step B: Calculate w_d = w_n * sqrt(1 - zeta^2).`,
-            `   - Step C: Substitute in formulas above for exact time values.`,
-            `6. QUICK REVISION NOTE:`,
-            `   - Underdamped systems (0 < zeta < 1) show oscillations before settling.`
-        ];
-
-        let y = 100;
-        steps.forEach(line => {
-            if (line.startsWith("1.") || line.startsWith("2.") || line.startsWith("3.") || line.startsWith("4.") || line.startsWith("5.") || line.startsWith("6.")) {
-                ctx.fillStyle = "#1a237e";
-                ctx.font = "bold 15px sans-serif";
-            } else {
-                ctx.fillStyle = "#333333";
-                ctx.font = "13px sans-serif";
-            }
-            ctx.fillText(line, 35, y);
-            y += 38;
-        });
-
-        ctx.fillStyle = "#1a237e";
-        ctx.font = "italic bold 14px sans-serif";
-        ctx.fillText("✍️ Prepared by: Faculty G. Nagarjuna (Dept. of ECE)", 35, 740);
-
-        currentMaterialDataUrl = canvas.toDataURL("image/jpeg", 0.9);
-        displayMaterialCard(currentMaterialDataUrl, `✨ Generated Notes: ${topic}`);
-    }
-
-    function displayMaterialCard(dataUrl, badgeText) {
-        document.getElementById('material-img-element').src = dataUrl;
-        document.getElementById('material-preview-card').style.display = 'block';
-        document.getElementById('file-badge').style.display = 'inline-block';
-        document.getElementById('file-badge').innerHTML = badgeText;
-    }
-
-    function clearAttachment() {
-        currentMaterialDataUrl = "";
-        document.getElementById('file-upload').value = '';
-        document.getElementById('file-badge').style.display = 'none';
-        document.getElementById('material-preview-card').style.display = 'none';
-    }
-
-    function openImageModal() {
-        if(!currentMaterialDataUrl) return;
-        document.getElementById('modal-img').src = currentMaterialDataUrl;
-        document.getElementById('image-modal').style.display = 'flex';
-    }
-
-    function closeImageModal() {
-        document.getElementById('image-modal').style.display = 'none';
-    }
-
     function generateReport() {
         const sec = document.getElementById('sec-sel').value;
         const subject = document.getElementById('subject-sel').value;
@@ -367,14 +206,9 @@ Please Call me to know study details of your ward:</textarea>
                      `📌 *Sec:* ${sec} (${period}) | *Subject:* ${subject}\n` +
                      `📅 *Date:* ${new Date().toLocaleDateString()}\n` +
                      `📈 *Attendance:* ${document.getElementById('perc-ui').innerText}\n` +
-                     `📖 *Topic:* ${topic}\n`;
+                     `📖 *Topic:* ${topic}\n\n` +
+                     `🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
 
-        if (currentMaterialDataUrl) {
-            report += `🖼️ *Material Attached (Tap/Copy link to open notes image):*\n` +
-                      `🖼️ Link: ${currentMaterialDataUrl}\n`;
-        }
-
-        report += `\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
         return report;
     }
 
@@ -383,8 +217,7 @@ Please Call me to know study details of your ward:</textarea>
         const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
         records.unshift({ 
             time: new Date().toLocaleString(), 
-            data: report,
-            img: currentMaterialDataUrl 
+            data: report 
         });
         localStorage.setItem('ece_v5_hist', JSON.stringify(records.slice(0, 50)));
         alert("✅ Report Saved Successfully!");
@@ -394,22 +227,13 @@ Please Call me to know study details of your ward:</textarea>
         const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
         const list = document.getElementById('history-list');
         list.innerHTML = records.length ? '' : '<p class="text-center">No records.</p>';
-        records.forEach((rec, idx) => {
+        records.forEach((rec) => {
             const div = document.createElement('div');
             div.className = 'mb-3 border-bottom pb-2';
-            let imgHTML = rec.img ? `<div class="mt-1"><img src="${rec.img}" style="max-height:120px; border:2px solid #ffd600; border-radius:6px; cursor:pointer;" onclick="openHistoryImg('${idx}')"><br><small class="text-primary fw-bold">🔍 Tap image to view attached material</small></div>` : '';
-            div.innerHTML = `<small class="fw-bold text-primary">${rec.time}</small><pre>${rec.data}</pre>${imgHTML}`;
+            div.innerHTML = `<small class="fw-bold text-primary">${rec.time}</small><pre>${rec.data}</pre>`;
             list.appendChild(div);
         });
         document.getElementById('history-view').style.display = 'block';
-    }
-
-    function openHistoryImg(index) {
-        const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
-        if(records[index] && records[index].img) {
-            document.getElementById('modal-img').src = records[index].img;
-            document.getElementById('image-modal').style.display = 'flex';
-        }
     }
 
     function closeHistory() { document.getElementById('history-view').style.display = 'none'; }
