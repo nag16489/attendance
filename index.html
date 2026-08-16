@@ -22,8 +22,60 @@
         .topic-attach-area { background: #e8eaf6; padding: 8px 12px; border-radius: 30px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .topic-attach-area input, .topic-attach-area label { font-size: 0.8rem; }
         .file-badge { background: #0d6efd; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; white-space: nowrap; }
-        .file-badge i { margin-right: 4px; }
-        .material-preview { background: #f8f9fa; border-radius: 12px; padding: 10px; margin-top: 6px; font-size: 0.85rem; max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; white-space: pre-wrap; }
+        .material-preview { 
+            background: #fff8e1; 
+            border-radius: 16px; 
+            padding: 15px; 
+            margin-top: 8px; 
+            border: 2px dashed #ffb300;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .material-preview::before {
+            content: "📄 MATERIAL PREVIEW";
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #ffb300;
+            color: #1a237e;
+            padding: 0 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .material-image-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            margin: 10px 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .material-image-card .step {
+            background: #f5f5f5;
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin: 6px 0;
+            border-left: 4px solid #1a237e;
+        }
+        .material-image-card .step-number {
+            color: #1a237e;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .material-image-card .title {
+            color: #1a237e;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #ffd600;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -86,15 +138,15 @@
 
     <!-- Topic + Attachment + AI material generation -->
     <div class="mt-2 topic-attach-area justify-content-center">
-        <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Enter topic for AI material">
-        <button class="btn btn-sm btn-warning" onclick="generateAIMaterial()" style="font-weight:600;">✨ Get Material</button>
-        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15);">📎 Upload</label>
-        <input type="file" id="file-upload" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png" style="display:none;" onchange="handleFileUpload(event)">
-        <span id="file-badge" class="file-badge" style="display:none;">📄 file.pdf</span>
+        <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Enter topic for material">
+        <button class="btn btn-sm btn-warning" onclick="generateAIMaterial()" style="font-weight:600;">✨ Generate Material</button>
+        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15);">📎 Upload Image</label>
+        <input type="file" id="file-upload" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.txt" style="display:none;" onchange="handleFileUpload(event)">
+        <span id="file-badge" class="file-badge" style="display:none;">📄 file</span>
         <button class="btn btn-sm btn-outline-light" onclick="clearAttachment()" style="padding:0 8px;">✕</button>
     </div>
-    <!-- Material preview area (AI generated or uploaded content) -->
-    <div id="material-preview" class="material-preview" style="display:none; background: #fff8e1; border-left: 6px solid #ffb300;"></div>
+    <!-- Material preview as image-style card -->
+    <div id="material-preview" class="material-preview" style="display:none;"></div>
 </div>
 
 <div class="container mt-2" id="list"></div>
@@ -107,7 +159,7 @@
     
     <div class="mb-2">
         <textarea id="custom-msg" class="form-control form-control-sm" rows="2" style="font-size: 11px; background: #fffde7;">
-COLLEGE Attendance ALERT:Department of Electronics and Communication Engineering
+COLLEGE Attendance ALERT: Department of Electronics and Communication Engineering
 Subject: Urgent Notice: Attendance Warning 
 
 Dear Parent/Guardian,
@@ -133,6 +185,7 @@ Please Call to me to know study details of your ward:</textarea>
     let att = {};
     let uploadedFileData = null; 
     let aiGeneratedMaterial = ''; 
+    let materialHTML = '';
 
     function loadList() {
         const sec = document.getElementById('sec-sel').value;
@@ -203,74 +256,117 @@ Please Call to me to know study details of your ward:</textarea>
         return reportStr;
     }
 
-    // ----- AI Material Generator (simulated) -----
+    // ----- AI Material Generator (Image-style card) -----
     function generateAIMaterial() {
         const topic = document.getElementById('topic-name').value.trim();
         if (!topic) {
             alert('Please enter a topic first.');
             return;
         }
-        // Simulate AI generation with a clean, step-by-step handwritten-style material.
+        // Create a beautiful image-style card with step-by-step content
         const steps = [
-            `📘 *Step-by-Step Study Guide: ${topic.toUpperCase()}*`,
-            `1️⃣  *Introduction*  →  Overview of ${topic} and its importance in ECE.`,
-            `2️⃣  *Key Concepts*  →  Core principles, definitions, and units.`,
-            `3️⃣  *Mathematical Foundation*  →  Important formulas and derivations.`,
-            `4️⃣  *Practical Application*  →  Real-world use cases and circuit examples.`,
-            `5️⃣  *Step-by-Step Problem Solving*  →  Solved example with clear steps.`,
-            `6️⃣  *Common Mistakes*  →  Pitfalls to avoid while solving.`,
-            `7️⃣  *Summary & Quick Revision*  →  Bullet points for last-minute review.`,
-            `✏️  *Practice Problems*  →  3 unsolved problems with hints.`,
-            `📚  *Reference*  →  Recommended textbooks and online resources.`
-        ].join('\n\n');
+            { num: '1', text: 'Introduction to ' + topic },
+            { num: '2', text: 'Key Concepts & Definitions' },
+            { num: '3', text: 'Mathematical Formulations' },
+            { num: '4', text: 'Circuit/System Design Approach' },
+            { num: '5', text: 'Step-by-Step Problem Solving' },
+            { num: '6', text: 'Common Errors & How to Avoid' },
+            { num: '7', text: 'Summary & Quick Revision Points' }
+        ];
 
-        aiGeneratedMaterial = `🧠 *AI-Generated Material (Handwritten Style)*\n${steps}`;
-        // also store as file-like data
+        let cardHTML = `<div class="material-image-card">
+            <div class="title">📘 ${topic.toUpperCase()} - Study Material</div>`;
+        steps.forEach(step => {
+            cardHTML += `<div class="step"><span class="step-number">Step ${step.num}:</span> ${step.text}</div>`;
+        });
+        cardHTML += `<div style="margin-top:10px; font-size:0.85rem; color:#666; border-top:1px solid #eee; padding-top:8px;">
+            ✏️ Practice: Solve 3 problems based on this topic<br>
+            📚 Reference: Textbooks & Online Resources
+        </div></div>`;
+
+        materialHTML = cardHTML;
+        aiGeneratedMaterial = cardHTML;
         uploadedFileData = { 
-            name: `AI-${topic}.txt`, 
-            size: aiGeneratedMaterial.length, 
-            type: 'text/plain',
-            content: aiGeneratedMaterial 
+            name: `AI-${topic}.png`, 
+            size: cardHTML.length, 
+            type: 'image/png',
+            content: cardHTML 
         };
         document.getElementById('file-badge').style.display = 'inline-block';
         document.getElementById('file-badge').innerHTML = `🧠 AI: ${topic}`;
         document.getElementById('material-preview').style.display = 'block';
-        document.getElementById('material-preview').innerHTML = aiGeneratedMaterial.replace(/\n/g, '<br>');
-        alert('✨ AI material generated successfully! It will be included in the report.');
+        document.getElementById('material-preview').innerHTML = cardHTML;
+        alert('✨ AI material generated as image-style card! Click "SAVE DATA" to include it in report.');
     }
 
-    // ----- File upload handler (keeps file content for preview) -----
+    // ----- File upload handler (image or text) -----
     function handleFileUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            let content = ev.target.result;
-            // if it's a text file, show preview; else show file name only
-            if (file.type.startsWith('text/')) {
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const imgHTML = `<div class="material-image-card" style="text-align:center;">
+                    <div class="title">📸 Uploaded Material</div>
+                    <img src="${ev.target.result}" style="max-width:100%; max-height:300px; border-radius:8px; border:1px solid #ddd;" alt="Uploaded material">
+                    <div style="margin-top:8px; font-size:0.85rem; color:#666;">${file.name} (${(file.size/1024).toFixed(1)} KB)</div>
+                </div>`;
+                materialHTML = imgHTML;
+                uploadedFileData = { name: file.name, size: file.size, type: file.type, content: imgHTML };
+                document.getElementById('file-badge').style.display = 'inline-block';
+                document.getElementById('file-badge').innerHTML = `🖼️ ${file.name}`;
                 document.getElementById('material-preview').style.display = 'block';
-                document.getElementById('material-preview').innerHTML = content.substring(0, 1000) + (content.length > 1000 ? '\n... (truncated)' : '');
-            } else {
+                document.getElementById('material-preview').innerHTML = imgHTML;
+            };
+            reader.readAsDataURL(file);
+        } else if (file.type.startsWith('text/')) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const content = ev.target.result;
+                const cardHTML = `<div class="material-image-card">
+                    <div class="title">📄 ${file.name}</div>
+                    <pre style="white-space:pre-wrap; font-size:0.85rem; background:#f8f9fa; padding:10px; border-radius:8px;">${content.substring(0, 800)}${content.length > 800 ? '\n... (truncated)' : ''}</pre>
+                </div>`;
+                materialHTML = cardHTML;
+                uploadedFileData = { name: file.name, size: file.size, type: file.type, content: cardHTML };
+                document.getElementById('file-badge').style.display = 'inline-block';
+                document.getElementById('file-badge').innerHTML = `📄 ${file.name}`;
                 document.getElementById('material-preview').style.display = 'block';
-                document.getElementById('material-preview').innerHTML = `📎 *File uploaded:* ${file.name} (${(file.size/1024).toFixed(1)} KB)\n(Preview not available for this file type)`;
-            }
-            uploadedFileData = { name: file.name, size: file.size, type: file.type, content: content };
+                document.getElementById('material-preview').innerHTML = cardHTML;
+            };
+            reader.readAsText(file);
+        } else {
+            // For other files (PDF, DOC, etc.) show placeholder
+            const cardHTML = `<div class="material-image-card">
+                <div class="title">📎 ${file.name}</div>
+                <div style="padding:20px; text-align:center; background:#f5f5f5; border-radius:8px;">
+                    <span style="font-size:2rem;">📄</span>
+                    <p style="margin-top:10px;">File uploaded: ${file.name}</p>
+                    <p style="font-size:0.8rem; color:#666;">Size: ${(file.size/1024).toFixed(1)} KB</p>
+                    <p style="font-size:0.8rem; color:#666;">Click "SAVE DATA" to include in report</p>
+                </div>
+            </div>`;
+            materialHTML = cardHTML;
+            uploadedFileData = { name: file.name, size: file.size, type: file.type, content: cardHTML };
             document.getElementById('file-badge').style.display = 'inline-block';
-            document.getElementById('file-badge').innerHTML = `📄 ${file.name}`;
-        };
-        reader.readAsText(file);
+            document.getElementById('file-badge').innerHTML = `📎 ${file.name}`;
+            document.getElementById('material-preview').style.display = 'block';
+            document.getElementById('material-preview').innerHTML = cardHTML;
+        }
     }
 
     function clearAttachment() {
         uploadedFileData = null;
         aiGeneratedMaterial = '';
+        materialHTML = '';
         document.getElementById('file-upload').value = '';
         document.getElementById('file-badge').style.display = 'none';
         document.getElementById('material-preview').style.display = 'none';
         document.getElementById('material-preview').innerHTML = '';
     }
 
-    // ----- Generate report with topic + material (AI or uploaded) -----
+    // ----- Generate report with topic + material (image-style) -----
     function generateReport() {
         const sec = document.getElementById('sec-sel').value;
         const subject = document.getElementById('subject-sel').value;
@@ -278,20 +374,12 @@ Please Call to me to know study details of your ward:</textarea>
         const topic = document.getElementById('topic-name').value.trim() || 'Not specified';
         const abs = students[sec].filter(s => att[s.r] === 'A');
         
-        let attachStr = 'No attachment';
-        let materialContent = '';
-        if (uploadedFileData) {
-            if (uploadedFileData.content && uploadedFileData.type && uploadedFileData.type.startsWith('text/')) {
-                materialContent = uploadedFileData.content.substring(0, 500) + (uploadedFileData.content.length > 500 ? '\n... (truncated)' : '');
-            } else if (aiGeneratedMaterial) {
-                materialContent = aiGeneratedMaterial.substring(0, 500) + (aiGeneratedMaterial.length > 500 ? '\n... (truncated)' : '');
-            } else {
-                materialContent = `File: ${uploadedFileData.name} (${(uploadedFileData.size/1024).toFixed(1)} KB)`;
-            }
-            attachStr = `📎 ${uploadedFileData.name}`;
+        let materialDisplay = 'No material attached';
+        if (materialHTML) {
+            materialDisplay = materialHTML;
         }
 
-        return `📊 *ATTENDANCE REPORT*\n📝 *Subject:* ${subject}\n👨‍🏫 *Faculty:* G.Nagarjuna\n📌 *Sec:* ${sec} (${period})\n📅 *Date:* ${new Date().toLocaleDateString()}\n📈 *Att:* ${document.getElementById('perc-ui').innerText}\n📖 *Topic:* ${topic}\n📎 *Material:* ${attachStr}\n\n📄 *Material Content (step-by-step):*\n${materialContent || 'No material content available'}\n\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
+        return `📊 *ATTENDANCE REPORT*\n📝 *Subject:* ${subject}\n👨‍🏫 *Faculty:* G.Nagarjuna\n📌 *Sec:* ${sec} (${period})\n📅 *Date:* ${new Date().toLocaleDateString()}\n📈 *Att:* ${document.getElementById('perc-ui').innerText}\n📖 *Topic:* ${topic}\n\n📎 *MATERIAL (Image-style card):*\n${materialDisplay}\n\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
     }
 
     function saveRecord() {
@@ -299,7 +387,7 @@ Please Call to me to know study details of your ward:</textarea>
         const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
         records.unshift({ time: new Date().toLocaleString(), data: report });
         localStorage.setItem('ece_v5_hist', JSON.stringify(records.slice(0, 50)));
-        alert("Report Saved!");
+        alert("✅ Report Saved with material preview!");
     }
 
     function openHistory() {
@@ -316,9 +404,21 @@ Please Call to me to know study details of your ward:</textarea>
     }
 
     function closeHistory() { document.getElementById('history-view').style.display = 'none'; }
-    function clearHistory() { if(confirm("Clear?")) { localStorage.removeItem('ece_v5_hist'); openHistory(); } }
-    function shareGroupWA() { window.open(`https://wa.me/?text=${encodeURIComponent(generateReport())}`, '_blank'); }
-    function copyText() { navigator.clipboard.writeText(generateReport()); alert("Copied!"); }
+    function clearHistory() { if(confirm("Clear all saved records?")) { localStorage.removeItem('ece_v5_hist'); openHistory(); } }
+    
+    function shareGroupWA() {
+        const report = generateReport();
+        // Strip HTML for WhatsApp
+        const plainReport = report.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+        window.open(`https://wa.me/?text=${encodeURIComponent(plainReport)}`, '_blank');
+    }
+    
+    function copyText() {
+        const report = generateReport();
+        const plainReport = report.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+        navigator.clipboard.writeText(plainReport);
+        alert("📋 Report copied to clipboard!");
+    }
     
     function sendBulkSMS() {
         const sec = document.getElementById('sec-sel').value;
