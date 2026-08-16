@@ -58,10 +58,9 @@
     </div>
 </div>
 
-<!-- Full Image View Modal -->
-<div id="image-modal" class="d-flex justify-content-center align-items-center flex-column">
-    <button class="btn btn-light btn-sm mb-2 fw-bold" onclick="closeImageModal()">✕ Close Material</button>
-    <img id="modal-img" src="" style="max-width: 95%; max-height: 80vh; border-radius: 10px; box-shadow: 0 0 15px rgba(255,255,255,0.3);">
+<!-- Full Image View Modal (Tap anywhere on overlay to close) -->
+<div id="image-modal" class="d-flex justify-content-center align-items-center" onclick="closeImageModal()">
+    <img id="modal-img" src="" style="max-width: 95%; max-height: 85vh; border-radius: 10px; box-shadow: 0 0 15px rgba(255,255,255,0.3);">
 </div>
 
 <div class="header text-center">
@@ -232,7 +231,6 @@ Please Call me to know study details of your ward:</textarea>
         return reportStr;
     }
 
-    // ----- Render Clean Handwriting Style Image Card for AI Material -----
     function generateAIMaterial() {
         const topic = document.getElementById('topic-name').value.trim();
         if (!topic) return alert('Please enter a topic first!');
@@ -242,11 +240,9 @@ Please Call me to know study details of your ward:</textarea>
         canvas.height = 700;
         const ctx = canvas.getContext('2d');
 
-        // Clean white chalkboard / lined paper background
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Header Title
         ctx.fillStyle = "#1a237e";
         ctx.font = "bold 22px 'Courier New', monospace";
         ctx.fillText(`📘 TOPIC: ${topic.toUpperCase()}`, 30, 50);
@@ -258,7 +254,6 @@ Please Call me to know study details of your ward:</textarea>
         ctx.lineTo(570, 65);
         ctx.stroke();
 
-        // Clean handwriting-style steps
         const points = [
             "1. Introduction & Overview",
             "2. Core Concepts & Mathematical Models",
@@ -276,7 +271,6 @@ Please Call me to know study details of your ward:</textarea>
             ctx.fillText(pt, 40, y);
             y += 45;
             
-            // Subtle clean line dividers
             ctx.strokeStyle = "#f0f0f0";
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -285,7 +279,6 @@ Please Call me to know study details of your ward:</textarea>
             ctx.stroke();
         });
 
-        // Faculty signoff
         ctx.fillStyle = "#1a237e";
         ctx.font = "italic bold 14px sans-serif";
         ctx.fillText("✍️ Prepared by: Faculty G. Nagarjuna (Dept. of ECE)", 40, 640);
@@ -294,7 +287,6 @@ Please Call me to know study details of your ward:</textarea>
         displayMaterialCard(currentMaterialDataUrl, `✨ AI: ${topic}`);
     }
 
-    // ----- Process & Clean Uploaded Blackboard Photo (Noise Removal + High Contrast) -----
     function handleBlackboardUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -309,22 +301,18 @@ Please Call me to know study details of your ward:</textarea>
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
 
-                // Image processing: Binarize & clean blackboard noise
                 const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imgData.data;
 
                 for (let i = 0; i < data.length; i += 4) {
-                    // Grayscale conversion
                     let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
                     
-                    // High-contrast clean handwriting filter
-                    // Chalk strokes (bright) become clear dark text, background becomes clean white
                     if (avg > 110) {
-                        data[i] = 20;     // Dark sharp text
+                        data[i] = 20;
                         data[i + 1] = 30;
                         data[i + 2] = 80;
                     } else {
-                        data[i] = 255;    // Clean background
+                        data[i] = 255;
                         data[i + 1] = 255;
                         data[i + 2] = 255;
                     }
@@ -363,7 +351,6 @@ Please Call me to know study details of your ward:</textarea>
         document.getElementById('image-modal').style.display = 'none';
     }
 
-    // ----- Shortened Clean WhatsApp Attendance Report -----
     function generateReport() {
         const sec = document.getElementById('sec-sel').value;
         const subject = document.getElementById('subject-sel').value;
