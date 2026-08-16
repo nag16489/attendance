@@ -17,7 +17,6 @@
         .bg-wa { background: #25d366; }
         .bg-call { background: #0d6efd; }
         
-        /* Modal Overlays (Hidden by default to prevent blocking clicks) */
         #history-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; padding: 20px; }
         #image-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; padding: 20px; align-items: center; justify-content: center; }
         
@@ -114,9 +113,9 @@
 
     <!-- Topic Input & Material Generation Controls -->
     <div class="mt-2 topic-attach-area justify-content-center">
-        <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Enter topic for material">
-        <button class="btn btn-sm btn-warning" onclick="generateAIMaterial()" style="font-weight:600;">✨ Generate Material</button>
-        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15); cursor:pointer;">📷 Photo Board</label>
+        <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Enter topic name">
+        <button id="gen-btn" class="btn btn-sm btn-warning" onclick="generateAIMaterial()" style="font-weight:600;">✨ Generate Material</button>
+        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15); cursor:pointer;">📷 Board Photo</label>
         <input type="file" id="file-upload" accept="image/*" style="display:none;" onchange="handleBlackboardUpload(event)">
         <span id="file-badge" class="file-badge" style="display:none;">🖼️ image</span>
         <button class="btn btn-sm btn-outline-light" onclick="clearAttachment()" style="padding:0 8px;">✕</button>
@@ -125,7 +124,7 @@
     <!-- Material Preview -->
     <div id="material-preview-card" class="material-card" style="display:none;">
         <img id="material-img-element" class="material-thumb" onclick="openImageModal()" alt="Material Image">
-        <div class="click-hint">🔍 Tap Image to View Full Screen</div>
+        <div class="click-hint">🔍 Tap Image to Preview | Uploading to cloud link...</div>
     </div>
 </div>
 
@@ -165,6 +164,7 @@ Please Call me to know study details of your ward:</textarea>
     
     let att = {};
     let currentMaterialDataUrl = ""; 
+    let currentUploadedImageUrl = ""; // Holds actual web link for WhatsApp
 
     function loadList() {
         const sec = document.getElementById('sec-sel').value;
@@ -235,18 +235,42 @@ Please Call me to know study details of your ward:</textarea>
         return reportStr;
     }
 
+    // Function to host generated canvas image online to get a clickable URL
+    function uploadImageToCloud(dataUrl, callback) {
+        const formData = new FormData();
+        formData.append("image", dataUrl.split(',')[1]);
+        
+        // ImgBB API key for uploading image online dynamically
+        fetch("https://api.imgbb.com/1/upload?key=6d70073203063db8412867e8053a487a", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.data && res.data.url) {
+                currentUploadedImageUrl = res.data.url;
+                if(callback) callback(res.data.url);
+            }
+        })
+        .catch(err => {
+            console.error("Cloud upload failed:", err);
+        });
+    }
+
     function generateAIMaterial() {
         const topic = document.getElementById('topic-name').value.trim();
-        if (!topic) return alert('Please enter a topic first!');
+        if (!topic) return alert('Please enter a topic name!');
 
         const canvas = document.createElement('canvas');
-        canvas.width = 600;
-        canvas.height = 700;
+        canvas.width = 650;
+        canvas.height = 800;
         const ctx = canvas.getContext('2d');
 
+        // Background
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Header Title
         ctx.fillStyle = "#1a237e";
         ctx.font = "bold 22px 'Courier New', monospace";
         ctx.fillText(`📘 TOPIC: ${topic.toUpperCase()}`, 30, 50);
@@ -255,40 +279,55 @@ Please Call me to know study details of your ward:</textarea>
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(30, 65);
-        ctx.lineTo(570, 65);
+        ctx.lineTo(620, 65);
         ctx.stroke();
 
-        const points = [
-            "1. Introduction & Overview",
-            "2. Core Concepts & Mathematical Models",
-            "3. Key Formulas & Derivations",
-            "4. Circuit / Block Diagram Analysis",
-            "5. Step-by-Step Problem Solving Method",
-            "6. Critical Practice Exercises",
-            "7. Quick Summary for Revision"
+        // Clear Step-Wise Detailed Content
+        const steps = [
+            `1. DEFINITION & BASIC CONCEPT:`,
+            `   - ${topic} forms core system responses in Control / ECE systems.`,
+            `2. STEP-BY-STEP MATHEMATICAL MODEL:`,
+            `   - Transfer Function: C(s)/R(s) = w_n^2 / (s^2 + 2*zeta*w_n*s + w_n^2)`,
+            `3. KEY PARAMETERS & TIME SPECIFICATIONS:`,
+            `   - Delay Time (td): Time needed to reach 50% of final response.`,
+            `   - Rise Time (tr): Time taken to rise from 10% to 100% of final value.`,
+            `   - Peak Time (tp): Time required to reach the very first peak of overshoot.`,
+            `   - Peak Overshoot (Mp): Normalized peak height percentage above steady state.`,
+            `4. WORKED FORMULA SUMMARY:`,
+            `   - tr = (pi - theta) / w_d | tp = pi / w_d | td = (1 + 0.7*zeta) / w_n`,
+            `5. STEP-BY-STEP SOLVING PROCEDURE:`,
+            `   - Step A: Find w_n (Natural Freq) & zeta (Damping Ratio) from characteristic equation.`,
+            `   - Step B: Calculate w_d = w_n * sqrt(1 - zeta^2).`,
+            `   - Step C: Substitute in formulas above for exact time values.`,
+            `6. QUICK REVISION NOTE:`,
+            `   - Underdamped systems (0 < zeta < 1) show oscillations before settling.`
         ];
 
         ctx.fillStyle = "#2c3e50";
-        ctx.font = "bold 16px 'Comic Sans MS', cursive, sans-serif";
-        let y = 110;
-        points.forEach(pt => {
-            ctx.fillText(pt, 40, y);
-            y += 45;
-            
-            ctx.strokeStyle = "#f0f0f0";
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(40, y - 15);
-            ctx.lineTo(560, y - 15);
-            ctx.stroke();
+        ctx.font = "14px 'Segoe UI', sans-serif";
+        let y = 100;
+        steps.forEach(line => {
+            if (line.startsWith("1.") || line.startsWith("2.") || line.startsWith("3.") || line.startsWith("4.") || line.startsWith("5.") || line.startsWith("6.")) {
+                ctx.fillStyle = "#1a237e";
+                ctx.font = "bold 15px sans-serif";
+            } else {
+                ctx.fillStyle = "#333333";
+                ctx.font = "13px sans-serif";
+            }
+            ctx.fillText(line, 35, y);
+            y += 38;
         });
 
+        // Faculty Signature Footer
         ctx.fillStyle = "#1a237e";
         ctx.font = "italic bold 14px sans-serif";
-        ctx.fillText("✍️ Prepared by: Faculty G. Nagarjuna (Dept. of ECE)", 40, 640);
+        ctx.fillText("✍️ Prepared by: Faculty G. Nagarjuna (Dept. of ECE)", 35, 760);
 
         currentMaterialDataUrl = canvas.toDataURL("image/png");
         displayMaterialCard(currentMaterialDataUrl, `✨ AI: ${topic}`);
+        
+        // Upload image to web so students get a clickable web link
+        uploadImageToCloud(currentMaterialDataUrl);
     }
 
     function handleBlackboardUpload(e) {
@@ -325,6 +364,9 @@ Please Call me to know study details of your ward:</textarea>
                 ctx.putImageData(imgData, 0, 0);
                 currentMaterialDataUrl = canvas.toDataURL("image/png");
                 displayMaterialCard(currentMaterialDataUrl, `📷 Cleaned Board Photo`);
+                
+                // Upload image to web so students get a clickable web link
+                uploadImageToCloud(currentMaterialDataUrl);
             };
             img.src = event.target.result;
         };
@@ -340,6 +382,7 @@ Please Call me to know study details of your ward:</textarea>
 
     function clearAttachment() {
         currentMaterialDataUrl = "";
+        currentUploadedImageUrl = "";
         document.getElementById('file-upload').value = '';
         document.getElementById('file-badge').style.display = 'none';
         document.getElementById('material-preview-card').style.display = 'none';
@@ -369,8 +412,10 @@ Please Call me to know study details of your ward:</textarea>
                      `📈 *Attendance:* ${document.getElementById('perc-ui').innerText}\n` +
                      `📖 *Topic:* ${topic}\n`;
 
-        if (currentMaterialDataUrl) {
-            report += `🖼️ *Material Attached:* [1 Clean Handwriting Image Included]\n`;
+        if (currentUploadedImageUrl) {
+            report += `🖼️ *Material Link (Tap to view notes/diagram):*\n🔗 ${currentUploadedImageUrl}\n`;
+        } else if (currentMaterialDataUrl) {
+            report += `🖼️ *Material Attached:* [Processing link, tap WhatsApp send to include link]\n`;
         }
 
         report += `\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
@@ -409,7 +454,7 @@ Please Call me to know study details of your ward:</textarea>
     function copyText() {
         const report = generateReport();
         navigator.clipboard.writeText(report);
-        alert("📋 Concise WhatsApp report copied to clipboard!");
+        alert("📋 Report copied to clipboard!");
     }
     
     function sendBulkSMS() {
