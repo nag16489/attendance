@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3rd Year ECE Attendance Pro - G. Nagarjuna</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; padding-bottom: 340px; font-family: 'Segoe UI', sans-serif; }
+        .header { background: #1a237e; color: white; padding: 15px; position: sticky; top: 0; z-index: 1000; border-bottom: 4px solid #ffd600; }
+        .student-item { background: white; margin: 8px; padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border-left: 8px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .is-a { border-left-color: #d32f2f; background: #fff5f5; }
+        .is-p { border-left-color: #2e7d32; background: #f1f8f1; }
+        .footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #ddd; z-index: 1001; border-radius: 20px 20px 0 0; }
+        .action-btns { display: flex; gap: 8px; }
+        .btn-round { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 16px; color: white; font-weight: bold; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .bg-wa { background: #25d366; }
+        .bg-call { background: #0d6efd; }
+        #history-view { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; padding:20px; }
+        .history-card { background: white; height: 85%; border-radius: 15px; padding: 20px; overflow-y: auto; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 11px; white-space: pre-wrap; color: #333; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+<div id="history-view">
+    <div class="history-card shadow">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="m-0 fw-bold text-primary">📜 SAVED HISTORY</h5>
+            <button class="btn-close" onclick="closeHistory()"></button>
+        </div>
+        <div id="history-list"></div>
+        <button class="btn btn-outline-danger btn-sm w-100 mt-3" onclick="clearHistory()">DELETE ALL</button>
+    </div>
+</div>
+
+<div class="header text-center">
+    <h5 class="m-0 fw-bold">G. NAGARJUNA (3rd YEAR ECE)</h5>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <small id="current-date" class="opacity-75"></small>
+        <div class="text-end">
+            <div id="perc-ui" style="font-size: 1.4rem; font-weight: 800; color: #ffd600; line-height: 1;">0%</div>
+            <div id="count-ui" style="font-size: 0.7rem; font-weight: bold;">(0/0)</div>
+        </div>
+    </div>
+    
+    <div class="mt-3 row g-1">
+        <div class="col-3">
+            <select id="sec-sel" class="form-select form-select-sm" onchange="loadList()">
+                <option value="A">Sec A</option>
+                <option value="B">Sec B</option>
+                <option value="C">Sec C</option>
+            </select>
+        </div>
+        <div class="col-3">
+            <select id="subject-sel" class="form-select form-select-sm">
+                <option value="COI">COI</option>
+                <option value="CS">CS</option>
+                <option value="DSP">DSP</option>
+                <option value="EMI">EMI</option>
+                <option value="MPMC">MPMC</option>
+                <option value="OS">OS</option>
+                <option value="DBMS">DBMS</option>
+            </select>
+        </div>
+        <div class="col-3">
+            <select id="period-sel" class="form-select form-select-sm">
+                <option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option>
+                <option value="P4">P4</option><option value="P5">P5</option><option value="P6">P6</option><option value="P7">P7</option>
+            </select>
+        </div>
+        <div class="col-3">
+            <div class="btn-group w-100">
+                <input type="radio" class="btn-check" name="m" id="p" value="P" checked>
+                <label class="btn btn-outline-light btn-sm fw-bold" for="p">P</label>
+                <input type="radio" class="btn-check" name="m" id="a" value="A">
+                <label class="btn btn-outline-light btn-sm fw-bold" for="a">A</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-2" id="list"></div>
+
+<div class="footer shadow-lg">
+    <div class="d-flex gap-2 mb-2">
+        <button class="btn btn-primary flex-grow-1 fw-bold btn-sm" onclick="saveRecord()">💾 SAVE DATA</button>
+        <button class="btn btn-info text-white flex-grow-1 fw-bold btn-sm" onclick="openHistory()">👁️ VIEW SAVED</button>
+    </div>
+    
+    <div class="mb-2">
+        <textarea id="custom-msg" class="form-control form-control-sm" rows="2" style="font-size: 11px; background: #fffde7;">
+COLLEGE Attendance ALERT:Department of Electronics and Communication Engineering
+Subject: Urgent Notice: Attendance Warning 
+
+Dear Parent/Guardian,
+This is to inform you that your ward, was absent from college today. Please ensure they report to college tomorrow morning without fail. Consistent attendance is mandatory.
+
+Regards,
+Please Call to me to know study details of your ward:</textarea>
+    </div>
+
+    <div class="row g-1">
+        <div class="col-12"><button class="btn btn-success w-100 fw-bold" onclick="shareGroupWA()">🚀 SEND GROUP WHATSAPP</button></div>
+        <div class="col-6"><button class="btn btn-outline-danger w-100 fw-bold btn-sm" onclick="sendBulkSMS()">🎤 BULK SMS</button></div>
+        <div class="col-6"><button class="btn btn-outline-dark w-100 fw-bold btn-sm" onclick="copyText()">📋 COPY REPORT</button></div>
+    </div>
+</div>
+
+<script>
+    const students = {
+        'A': [{"r":"24E11A0401","n":"A.SANDEEP KUMAR"},{"r":"24E11A0402","n":"ABBAS AKSHAYA"},{"r":"24E11A0403","n":"A.Harsha vardhan"},{"r":"24E11A0404","n":"APPALA SRILIKITHA"},{"r":"24E11A0405","n":"BADETI HARSHITH"},{"r":"24E11A0406","n":"BAIRU NAVEEN"},{"r":"24E11A0407","n":"B SURYA TEJA"},{"r":"24E11A0408","n":"BANDI TEJA"},{"r":"24E11A0409","n":"BANOTH RAHUL NAYAK"},{"r":"24E11A0410","n":"BOLLU NANDHINI"},{"r":"24E11A0411","n":"BUDUTHA ARUNKUMAR"},{"r":"24E11A0412","n":"CH.BHARATH KUMAR"},{"r":"24E11A0413","n":"EDLA NIKHIL"},{"r":"24E11A0414","n":"E SHIVA"},{"r":"24E11A0415","n":"PADALA AKASH REDDY"},{"r":"24E11A0416","n":"AMBOTHU SIDDARTH NAYAK"},{"r":"24E11A0417","n":"CHAKRAVARTHULA SHRUTHI"},{"r":"24E11A0418","n":"HANUMANDLA SAMPATH KUMAR"},{"r":"24E11A0419","n":"ITHARAJU JYOSHNA"},{"r":"24E11A0420","n":"INDRVATH RAHUL"},{"r":"24E11A0421","n":"JADI ANUSHA"},{"r":"24E11A0422","n":"K.ABHISHEK"},{"r":"24E11A0423","n":"KAPPARI GIRIDHAR"},{"r":"24E11A0424","n":"KASA PAVANI"},{"r":"24E11A0425","n":"MALOTH GANDHI"},{"r":"24E11A0426","n":"KATAKAM VENKATA MANOJ KUMAR"},{"r":"24E11A0427","n":"KESARALA SAHITHI"},{"r":"24E11A0428","n":"KORRA RAMLAL"},{"r":"24E11A0429","n":"Kota Madhuri"},{"r":"24E11A0430","n":"K RAMU"},{"r":"24E11A0431","n":"KUNCHALARUPADEVI"},{"r":"24E11A0432","n":"KURRI THARUN"},{"r":"24E11A0433","n":"LAKKADI NARSIMHAREDDY"},{"r":"24E11A0434","n":"VACHEPALLI VINEELA"},{"r":"24E11A0435","n":"Madella vinith"},{"r":"24E11A0436","n":"MANNE MOUNIKA"},{"r":"24E11A0437","n":"MARIPELLI SAI KIRAN"},{"r":"24E11A0438","n":"Mekala. Bhargavi"},{"r":"24E11A0439","n":"MIDIDODDI ABHINAV"},{"r":"24E11A0440","n":"MUPPANA JAHNAVI"},{"r":"24E11A0441","n":"JULAKANTI ABHIRAM REDDY"},{"r":"24E11A0442","n":"NETHALLA SAI KUMAR"},{"r":"24E11A0443","n":"PAGILLA.BHARGAVI"},{"r":"24E11A0445","n":"POREDDY ANUSHA"},{"r":"24E11A0446","n":"POTTUMUTHU ADHI"},{"r":"24E11A0447","n":"PUNNA KRISHNA TEJA"},{"r":"24E11A0448","n":"PUNNA NAVEEN"},{"r":"24E11A0449","n":"MOHAMMED MAAZ ALI"},{"r":"24E11A0450","n":"C HARI PRASAD"},{"r":"24E11A0451","n":"SRIPADHA RISHI VARDHAN"},{"r":"24E11A0452","n":"TANGELLA MEGHANA REDDY"},{"r":"24E11A0453","n":"V Karthik"},{"r":"24E11A0454","n":"Vajrapu Raghuvaran"},{"r":"24E11A0455","n":"Veera pogula thirupathi"},{"r":"25E15A0401","n":"KUKKALA SAI KIRTHAN"},{"r":"25E15A0402","n":"LAKUMALLA AKASH"},{"r":"25E15A0403","n":"HANUMANDLA SAMANVIKA"},{"r":"25E15A0404","n":"KALVA SHIVA KRISHNA"},{"r":"25E15A0405","n":"UDARI SARAYU"},{"r":"25E15A0406","n":"RASAMMALLA SAI KUMAR"},{"r":"25E15A0407","n":"CHEGONDA SAITEJA"},{"r":"25E15A0408","n":"BOLLAVENA PADMAJA"},{"r":"25E15A0409","n":"AMMULA RAMYA"},{"r":"25E15A0410","n":"BASUTHKAR ABHISHEK"},{"r":"25E15A0411","n":"G GOVARDHAN"},{"r":"25E15A0412","n":"KURVA RAMESH"},{"r":"25E15A0413","n":"B SAI CHARAN REDDY"},{"r":"25E15A0414","n":"GANGAPURAM PRAVEEN"},{"r":"25E15A0415","n":"REVANTH RA"}],
+        'B': [{"r":"24E11A0456","n":"AMBATI VARUN KUMAR"},{"r":"24E11A0457","n":"ATHI SWATHI"},{"r":"24E11A0458","n":"BADIGAR SAI DHANUSH"},{"r":"24E11A0459","n":"BANDARU THIRUPATHI SWAMY"},{"r":"24E11A0460","n":"BANOTHU NARASIMHA NAIK"},{"r":"24E11A0461","n":"BOLLEDULLA RUDRANSH NATH"},{"r":"24E11A0462","n":"BURA AKHIL"},{"r":"24E11A0463","n":"CHATAMONI AKHILA"},{"r":"24E11A0464","n":"CHEGURI SHIVA KUMAR"},{"r":"24E11A0465","n":"DHAMASTHAPURAM AKSHAYA"},{"r":"24E11A0466","n":"DHARAVATH NATHEEP NAIK"},{"r":"24E11A0467","n":"DHARAVATH THANUSREE"},{"r":"24E11A0468","n":"GADDALA MADHAVA SAIRAM"},{"r":"24E11A0469","n":"GADDAM DEEPAK"},{"r":"24E11A0470","n":"GOLLA ADITYA"},{"r":"24E11A0471","n":"GOLLENA KRISHNA"},{"r":"24E11A0472","n":"JANI THOTAPALLY"},{"r":"24E11A0473","n":"G SUNIL"},{"r":"24E11A0474","n":"SINGARAM SUNNY ABISHEK"},{"r":"24E11A0475","n":"KOMATI ARUN KUMAR"},{"r":"24E11A0476","n":"GURAJALA SHRUTHIKA"},{"r":"24E11A0477","n":"THAMMALI SAI BHAVANA"},{"r":"24E11A0478","n":"Merugu shiva"},{"r":"24E11A0479","n":"JOGU NISHANTH"},{"r":"24E11A0480","n":"Kadari Udaykiran Reddy"},{"r":"24E11A0481","n":"KALAKUNTLA SAI GANESH"},{"r":"24E11A0482","n":"KALAPPAGARI ABHINAV"},{"r":"24E11A0483","n":"KANKALA NAGARANI"},{"r":"24E11A0484","n":"KATHI ANITHA"},{"r":"24E11A0485","n":"KODELA THARUN"},{"r":"24E11A0486","n":"KOLAN CHARAN REDDY"},{"r":"24E11A0487","n":"KOTAGIRI JASHWANTH CHARY"},{"r":"24E11A0488","n":"PEDDAPURAM AKHIL"},{"r":"24E11A0489","n":"Kurakula Bharath Kumar"},{"r":"24E11A0490","n":"LENKALAPALLY PRANAY TEJA"},{"r":"24E11A0491","n":"L PRUDHVIRAJU"},{"r":"24E11A0492","n":"MAIDAM AKSHAYA"},{"r":"24E11A0493","n":"NADIKUDA DEVI SRI PRASAD"},{"r":"24E11A0494","n":"NAKIREKANTI BHANU CHANDRA PRASAD"},{"r":"24E11A0495","n":"NAKKA DHANRAJ"},{"r":"24E11A0496","n":"NENAVATH GUNDA"},{"r":"24E11A0497","n":"PUTTA RAVICHANDRIKA"},{"r":"24E11A0498","n":"PALLE MIKSHITHA"},{"r":"24E11A0499","n":"PANNALA NIMITHA"},{"r":"24E11A04A0","n":"PENUGONDA HARSHITH"},{"r":"24E11A04A1","n":"SILIVERU SIDDHARTH"},{"r":"24E11A04A2","n":"SHAIK FAISAL AIYAN"},{"r":"24E11A04A3","n":"SHIVANI SANTHOSHI KUMARI"},{"r":"24E11A04A4","n":"THIRTHIYAL VARSHITH SAI"},{"r":"24E11A04A5","n":"THORNE ASHMITHA"},{"r":"24E11A04A6","n":"U.AKHILA"},{"r":"24E11A04A7","n":"Goura pooja"},{"r":"24E11A04A8","n":"PASNURI VENKATA RAMANA"},{"r":"24E11A04A9","n":"VUSHAKOLA RAHUL"},{"r":"24E11A04B0","n":"YESHALA DEEPAK"},{"r":"25E15A0416","n":"KOYALKAR SHRUTHIKA"},{"r":"25E15A0417","n":"MANDLA LOHITHA"},{"r":"25E15A0418","n":"RAVULA VAISHNAVI"},{"r":"25E15A0419","n":"V KALYAN"},{"r":"25E15A0420","n":"PATHURI VAISHNAVI"},{"r":"25E15A0421","n":"BADIKELA HARI PRAKASH"},{"r":"25E15A0422","n":"RAGULA MYKRANTH"},{"r":"25E15A0423","n":"SILLA BHANU PRAKASH"},{"r":"25E15A0424","n":"M SANJAY"},{"r":"25E15A0425","n":"BEJJENKI LAHARI"},{"r":"25E15A0426","n":"D JAI SUBHASH"},{"r":"25E15A0427","n":"M RAMCHARAN"},{"r":"25E15A0428","n":"REPALLE VAGDEVI"}],
+        'C': [{"r":"24E11A04B1","n":"ADUPA HARINI","p":"9949114225"}, {"r":"24E11A04B2","n":"ANANTHULA  VAISHNAVI","p":"9959042187"}, {"r":"24E11A04B3","n":"ANDANKEE JAGADEESH","p":"9502906526"}, {"r":"24E11A04B4","n":"Andekar Shiva Kumar","p":"9182597877"}, {"r":"24E11A04B5","n":"ANNAM TEJASWINI","p":"9908932378"}, {"r":"24E11A04B6","n":"BALAM MANISAI","p":"6301895500"}, {"r":"24E11A04B8","n":"BHUKYAADITYA","p":"7981954405"}, {"r":"24E11A04B9","n":"B MAHENDAR REDDY","p":"7601007981"}, {"r":"24E11A04C0","n":"BURRA RAMU","p":"9989915648"}, {"r":"24E11A04C1","n":"CHINTAKUNTA SAI DEEPAK","p":"9989813113"}, {"r":"24E11A04C2","n":"SHAIK SAMEER","p":"9866497516"}, {"r":"24E11A04C3","n":"MEKA SONI","p":"7675914546"}, {"r":"24E11A04C4","n":"DONTHAM SNEHITHA","p":"9515413238"}, {"r":"24E11A04C5","n":"KOTARI ARYA NAVISH","p":"8341053910"}, {"r":"24E11A04C6","n":"GADDAMEEDI AMULYA","p":"9949179912"}, {"r":"24E11A04C7","n":"GATLA TRIVENI","p":"9618169796"}, {"r":"24E11A04C8","n":"GODASU PREETHAM KUMAR","p":"7382805152"}, {"r":"24E11A04C9","n":"THADASINA CHARAN REDDY","p":"7801004779"}, {"r":"24E11A04D0","n":"GUNTOJU SAI CHANDU","p":"8897173147"}, {"r":"24E11A04D1","n":"JAIDUPALLY SRIHITHA REDDY","p":"9392274743"}, {"r":"24E11A04D2","n":"KADUSU NAGARAJU","p":"8106516682"}, {"r":"24E11A04D3","n":"K AKSHAYA","p":"9885468366"}, {"r":"24E11A04D4","n":"THOGARI SRAVANI","p":"7730841521"}, {"r":"24E11A04D5","n":"KARNATI PRAVALIKA","p":"9014251719"}, {"r":"24E11A04D6","n":"KONDAGORLAMADHAVI","p":"7799667565"}, {"r":"24E11A04D7","n":"KONDAPALLI HARSHA VARDHAN DATTA","p":"9676546789"}, {"r":"24E11A04D8","n":"U HARSHITHA","p":"9505306676"}, {"r":"24E11A04D9","n":"KUNSOTH BHARATH","p":"9618594001"}, {"r":"24E11A04E0","n":"KURUVA MAHESH","p":"9014476659"}, {"r":"24E11A04E1","n":"LODDA SAI CHARAN","p":"798998859"}, {"r":"24E11A04E2","n":"Likki vivek vardhan","p":"7075146622"},{"r":"24E11A04E4","n":"N.ABHISHEK","p":"8309704586"},{"r":"24E11A04E5","n":"VANKADOTHU KAVILASH","p":"9032449011"},{"r":"24E11A04E6","n":"YAJJALA DHANANJAY","p":"6302022403"},{"r":"24E11A04E7","n":"TEJAVATH NIKHIL","p":"9849051416"},{"r":"24E11A04E8","n":"PURUGULA VAISHNAVI"},{"r":"24E11A04E9","n":"RADARAPU AJITHKUMARq"},{"r":"24E11A04F0","n":"BAMAN NANDULAL"},{"r":"24E11A04F1","n":"RAVULA PAVAN"},{"r":"25E15A0429","n":"SURUBULA SANJAY"},{"r":"25E15A0430","n":"GANJI PRAGATHI"},{"r":"25E15A0431","n":"YAMJALA BHUVANA CHANDRA"},{"r":"25E15A0432","n":"GADIGE SHAILAJA"},{"r":"25E15A0433","n":"AKKAVATHRI NAVEENA"},{"r":"25E15A0434","n":"CHINTAKUNTA LAHARIKA"},{"r":"25E15A0435","n":"MOHAMMED SAMEERUDDIN"},{"r":"25E15A0436","n":"MEGAVATH PAVAN"},{"r":"25E15A0437","n":"JATOTH DONA"},{"r":"25E15A0438","n":"DHARAVATH SAINAYAK"},{"r":"25E15A0439","n":"SAKA HARINI"},{"r":"25E15A0440","n":"PASUPULA DEEPIKA"},{"r":"25E15A0441","n":"KILARI THARUN"},{"r":"25E15A0442","n":"NANDALA VASAVI"},{"r":"25E15A0443","n":"PANDALA AKSHITHA"},{"r":"25E15A0444","n":"KANAKATI SPANDANA"},{"r":"25E15A0445","n":"GOWLIKAR HARSHITA"},{"r":"25E15A0446","n":"MANTRI AMULYA"},{"r":"25E15A0447","n":"OLLALA SOUJANYA"},{"r":"25E15A0448","n":"GADASANDHU AKSHITHA"},{"r":"25E15A0449","n":"VANGA AKASH"},{"r":"25E15A0450","n":"PALLE MOUNIHARIKA"},{"r":"25E15A0451","n":"VANGA ASHWINI"},{"r":"25E15A0452","n":"B RAVI TEJA"},{"r":"25E15A0453","n":"S ABHILASH"},{"r":"25E15A0454","n":"B MADHUKAR"},{"r":"25E15A0455","n":"I VAISHNAVI"},{"r":"25E15A0456","n":"SURVI PRANEETH"}]
+    };
+    let att = {};
+
+    function loadList() {
+        const sec = document.getElementById('sec-sel').value;
+        const container = document.getElementById('list');
+        container.innerHTML = '';
+        att = {};
+        
+        if(!students[sec]) return;
+
+        students[sec].forEach(s => {
+            att[s.r] = 'P';
+            const div = document.createElement('div');
+            div.className = 'student-item is-p';
+            div.id = `card-${s.r}`;
+            div.innerHTML = `
+                <div onclick="toggleAtt('${s.r}')" style="flex-grow:1;">
+                    <strong class="d-block">${s.r}</strong>
+                    <small class="text-muted fw-bold">${s.n.toUpperCase()}</small>
+                </div>
+                <div class="action-btns">
+                    <button onclick="sendWA('${s.p}', '${s.n}')" class="btn-round bg-wa">WA</button>
+                    <a href="tel:${s.p}" class="btn-round bg-call">📞</a>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        updateStats();
+    }
+
+    function toggleAtt(roll) {
+        const mode = document.querySelector('input[name="m"]:checked').value;
+        att[roll] = mode;
+        document.getElementById(`card-${roll}`).className = 'student-item ' + (mode === 'P' ? 'is-p' : 'is-a');
+        updateStats();
+    }
+
+    function updateStats() {
+        const sec = document.getElementById('sec-sel').value;
+        const total = students[sec].length;
+        const present = Object.values(att).filter(v => v === 'P').length;
+        document.getElementById('perc-ui').innerText = total ? Math.round((present/total)*100) + '%' : '0%';
+        document.getElementById('count-ui').innerText = `(${present}/${total})`;
+    }
+
+    function sendWA(phone, name) {
+        if(!phone || phone === "undefined") return alert("Phone number not found!");
+        const baseMsg = document.getElementById('custom-msg').value;
+        const styledMsg = `🟢 *BHARAT COLLEGE(BIET)/ECE ATTENDANCE ALERT* 🟢\n\n` +
+                          `👤 *Student Name:* ${name.toUpperCase()}\n` +
+                          `📝 *Status:* _ABSENT_\n\n` +
+                          `${baseMsg}\n\n` +
+                          `🙏 *Regards,* \n*G. Nagarjuna (CLASS Incharge)*`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(styledMsg)}`, '_blank');
+    }
+
+    function formatAbsentees(absList) {
+        if (absList.length === 0) return "All present.";
+        let reportStr = ""; let lastPrefix = "";
+        absList.forEach((s, index) => {
+            const fullRoll = s.r;
+            const prefix = fullRoll.substring(0, fullRoll.length - 2);
+            const suffix = fullRoll.substring(fullRoll.length - 2);
+            if (prefix !== lastPrefix) {
+                reportStr += (index === 0 ? "" : "\n") + fullRoll;
+                lastPrefix = prefix;
+            } else { reportStr += ", " + suffix; }
+        });
+        return reportStr;
+    }
+
+    function generateReport() {
+        const sec = document.getElementById('sec-sel').value;
+        const subject = document.getElementById('subject-sel').value;
+        const period = document.getElementById('period-sel').value;
+        const abs = students[sec].filter(s => att[s.r] === 'A');
+        return `📊 *ATTENDANCE REPORT*\n📝 *Subject:* ${subject}\n👨‍🏫 *Faculty:* G.Nagarjuna\n📌 *Sec:* ${sec} (${period})\n📅 *Date:* ${new Date().toLocaleDateString()}\n📈 *Att:* ${document.getElementById('perc-ui').innerText}\n\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
+    }
+
+    function saveRecord() {
+        const report = generateReport();
+        const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
+        records.unshift({ time: new Date().toLocaleString(), data: report });
+        localStorage.setItem('ece_v5_hist', JSON.stringify(records.slice(0, 50)));
+        alert("Report Saved!");
+    }
+
+    function openHistory() {
+        const records = JSON.parse(localStorage.getItem('ece_v5_hist') || '[]');
+        const list = document.getElementById('history-list');
+        list.innerHTML = records.length ? '' : '<p class="text-center">No records.</p>';
+        records.forEach(rec => {
+            const div = document.createElement('div');
+            div.className = 'mb-3 border-bottom pb-2';
+            div.innerHTML = `<small class="fw-bold text-primary">${rec.time}</small><pre>${rec.data}</pre>`;
+            list.appendChild(div);
+        });
+        document.getElementById('history-view').style.display = 'block';
+    }
+
+    function closeHistory() { document.getElementById('history-view').style.display = 'none'; }
+    function clearHistory() { if(confirm("Clear?")) { localStorage.removeItem('ece_v5_hist'); openHistory(); } }
+    function shareGroupWA() { window.open(`https://wa.me/?text=${encodeURIComponent(generateReport())}`, '_blank'); }
+    function copyText() { navigator.clipboard.writeText(generateReport()); alert("Copied!"); }
+    
+    function sendBulkSMS() {
+        const sec = document.getElementById('sec-sel').value;
+        const abs = students[sec].filter(s => att[s.r] === 'A' && s.p);
+        if(!abs.length) return alert("No absentees with phone numbers!");
+        const nums = abs.map(s => s.p).join(/iPad|iPhone|iPod/.test(navigator.userAgent) ? ',' : ';');
+        window.location.href = `sms:${nums}?body=${encodeURIComponent(document.getElementById('custom-msg').value)}`;
+    }
+
+    document.getElementById('current-date').innerText = new Date().toDateString();
+    loadList();
+</script>
+</body>
+</html>
