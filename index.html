@@ -115,8 +115,8 @@
     <div class="mt-2 topic-attach-area justify-content-center">
         <input type="text" id="topic-name" class="form-control form-control-sm" style="flex:2; min-width:120px;" placeholder="Enter topic name">
         <button id="gen-btn" class="btn btn-sm btn-warning" onclick="generateAIMaterial()" style="font-weight:600;">✨ Generate Material</button>
-        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15); cursor:pointer;">📷 Board Photo</label>
-        <input type="file" id="file-upload" accept="image/*" style="display:none;" onchange="handleBlackboardUpload(event)">
+        <label for="file-upload" class="btn btn-outline-light btn-sm mb-0" style="background:rgba(255,255,255,0.15); cursor:pointer;">📷 Upload Board Photo / Notes</label>
+        <input type="file" id="file-upload" accept="image/*" style="display:none;" onchange="handleNotesUpload(event)">
         <span id="file-badge" class="file-badge" style="display:none;">🖼️ image</span>
         <button class="btn btn-sm btn-outline-light" onclick="clearAttachment()" style="padding:0 8px;">✕</button>
     </div>
@@ -124,7 +124,7 @@
     <!-- Material Preview -->
     <div id="material-preview-card" class="material-card" style="display:none;">
         <img id="material-img-element" class="material-thumb" onclick="openImageModal()" alt="Material Image">
-        <div class="click-hint">🔍 Tap Image to Preview Material</div>
+        <div class="click-hint">🔍 Tap Image to Preview Attached Notes</div>
     </div>
 </div>
 
@@ -234,6 +234,44 @@ Please Call me to know study details of your ward:</textarea>
         return reportStr;
     }
 
+    // FIX: Read faculty photos clearly onto solid white background without black inversion
+    function handleNotesUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                // Standardize display resolution to keep response fast
+                const maxDim = 1200;
+                let w = img.width;
+                let h = img.height;
+                if (w > maxDim || h > maxDim) {
+                    if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                    else { w = Math.round((w * maxDim) / h); h = maxDim; }
+                }
+
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+
+                // Fill crisp white background first (Fixes transparency turning black issue)
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, w, h);
+
+                // Render clean faculty image
+                ctx.drawImage(img, 0, 0, w, h);
+
+                currentMaterialDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+                displayMaterialCard(currentMaterialDataUrl, `📷 Faculty Uploaded Material`);
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
     function generateAIMaterial() {
         const topic = document.getElementById('topic-name').value.trim();
         if (!topic) return alert('Please enter a topic name!');
@@ -243,7 +281,7 @@ Please Call me to know study details of your ward:</textarea>
         canvas.height = 780;
         const ctx = canvas.getContext('2d');
 
-        // Background
+        // Pure white background
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -259,7 +297,6 @@ Please Call me to know study details of your ward:</textarea>
         ctx.lineTo(620, 65);
         ctx.stroke();
 
-        // Detailed Content Steps
         const steps = [
             `1. DEFINITION & BASIC CONCEPT:`,
             `   - ${topic} forms core system responses in Control / ECE systems.`,
@@ -280,7 +317,6 @@ Please Call me to know study details of your ward:</textarea>
             `   - Underdamped systems (0 < zeta < 1) show oscillations before settling.`
         ];
 
-        ctx.fillStyle = "#2c3e50";
         let y = 100;
         steps.forEach(line => {
             if (line.startsWith("1.") || line.startsWith("2.") || line.startsWith("3.") || line.startsWith("4.") || line.startsWith("5.") || line.startsWith("6.")) {
@@ -299,48 +335,8 @@ Please Call me to know study details of your ward:</textarea>
         ctx.font = "italic bold 14px sans-serif";
         ctx.fillText("✍️ Prepared by: Faculty G. Nagarjuna (Dept. of ECE)", 35, 740);
 
-        currentMaterialDataUrl = canvas.toDataURL("image/png");
-        displayMaterialCard(currentMaterialDataUrl, `✨ AI: ${topic}`);
-    }
-
-    function handleBlackboardUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imgData.data;
-
-                // Simple high-contrast cleaning for blackboard text
-                for (let i = 0; i < data.length; i += 4) {
-                    let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    if (avg > 110) {
-                        data[i] = 20;
-                        data[i + 1] = 30;
-                        data[i + 2] = 80;
-                    } else {
-                        data[i] = 255;
-                        data[i + 1] = 255;
-                        data[i + 2] = 255;
-                    }
-                }
-
-                ctx.putImageData(imgData, 0, 0);
-                currentMaterialDataUrl = canvas.toDataURL("image/png");
-                displayMaterialCard(currentMaterialDataUrl, `📷 Cleaned Board Photo`);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
+        currentMaterialDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        displayMaterialCard(currentMaterialDataUrl, `✨ Generated Notes: ${topic}`);
     }
 
     function displayMaterialCard(dataUrl, badgeText) {
@@ -367,6 +363,7 @@ Please Call me to know study details of your ward:</textarea>
         document.getElementById('image-modal').style.display = 'none';
     }
 
+    // FIX: Ensure WhatsApp Report embeds actual preview link for student access
     function generateReport() {
         const sec = document.getElementById('sec-sel').value;
         const subject = document.getElementById('subject-sel').value;
@@ -382,7 +379,8 @@ Please Call me to know study details of your ward:</textarea>
                      `📖 *Topic:* ${topic}\n`;
 
         if (currentMaterialDataUrl) {
-            report += `🖼️ *Material Attached:* [1 Topic Material Image Attached]\n`;
+            report += `🖼️ *Material Attached (Tap/Copy link to open notes image):*\n` +
+                      `🖼️ Link: ${currentMaterialDataUrl}\n`;
         }
 
         report += `\n🚫 *ABSENTEES:*\n${formatAbsentees(abs)}`;
@@ -408,7 +406,7 @@ Please Call me to know study details of your ward:</textarea>
         records.forEach((rec, idx) => {
             const div = document.createElement('div');
             div.className = 'mb-3 border-bottom pb-2';
-            let imgHTML = rec.img ? `<div class="mt-1"><img src="${rec.img}" style="max-height:100px; border-radius:6px; cursor:pointer;" onclick="openHistoryImg('${idx}')"><br><small class="text-primary fw-bold">🔍 Tap image to expand</small></div>` : '';
+            let imgHTML = rec.img ? `<div class="mt-1"><img src="${rec.img}" style="max-height:120px; border:2px solid #ffd600; border-radius:6px; cursor:pointer;" onclick="openHistoryImg('${idx}')"><br><small class="text-primary fw-bold">🔍 Tap image to view attached material</small></div>` : '';
             div.innerHTML = `<small class="fw-bold text-primary">${rec.time}</small><pre>${rec.data}</pre>${imgHTML}`;
             list.appendChild(div);
         });
